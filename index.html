@@ -200,7 +200,7 @@
             transform: translateY(-1px);
         }
         
-        /* ===== FALLBACK TEMA ESCURO (garante que funcione mesmo sem a classe 'dark') ===== */
+        /* ===== FALLBACK TEMA ESCURO ===== */
     body, 
     .bg-yt-light, 
     .bg-yt-dark,
@@ -212,7 +212,6 @@
         color: #f1f5f9 !important;
     }
 
-    /* Ajustes específicos para elementos que precisam de contraste */
     .auth-input, .google-btn, .chip, .category-checkbox + label {
         background-color: #1e1e1e !important;
         color: #e5e5e5 !important;
@@ -224,7 +223,6 @@
         color: #1f2937 !important;
     }
 
-    /* Links e ícones no tema escuro */
     a, button:not(.bg-yt-brand):not(.bg-red-500) {
         color: #e5e5e5 !important;
     }
@@ -232,7 +230,6 @@
         color: #f97316 !important;
     }
 
-    /* Cards e containers */
     .bg-white, .bg-gray-100, .bg-gray-50 {
         background-color: #272727 !important;
     }
@@ -240,7 +237,6 @@
         background-color: #272727 !important;
     }
 
-    /* Exceções para elementos que precisam de cores claras (ex: modais internos) */
     .modal-upload .bg-white, .modal-edit-video .bg-white, .modal-report .bg-white, .modal-edit-profile .bg-white {
         background-color: #1a1a1a !important;
     }
@@ -248,7 +244,6 @@
         background-color: #0f0f0f !important;
     }
 
-    /* Manter botão "Publicar" laranja */
     .bg-yt-brand {
         background-color: #f97316 !important;
         color: white !important;
@@ -257,7 +252,6 @@
         background-color: #ef4444 !important;
         color: white !important;
     }
-        
     </style>
 </head>
 <body class="bg-yt-light dark:bg-yt-dark text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 overflow-x-hidden">
@@ -452,6 +446,7 @@
         </button>
     </footer>
 
+    <!-- Modal Upload (com thumbnail personalizada e playlist) -->
     <div id="modal-upload" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleUploadModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
@@ -464,6 +459,12 @@
                     <div id="thumbnail-preview" class="aspect-video flex items-center justify-center bg-gray-900">
                         <div class="text-center"><i class="fas fa-image text-4xl sm:text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>
                     </div>
+                </div>
+                <!-- NOVO: Campo de thumbnail personalizada -->
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-image text-yt-brand mr-1"></i> Capa personalizada (URL opcional)</label>
+                    <input type="text" id="up-thumbnail-url" placeholder="Deixe vazio para gerar automaticamente" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition" oninput="previewCustomThumbnail(this.value)">
+                    <p class="text-[10px] text-gray-400 mt-1">Se deixar em branco, a capa será gerada do meio do vídeo.</p>
                 </div>
                 <div class="space-y-4">
                     <div>
@@ -478,6 +479,11 @@
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição</label>
                     <textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
+                </div>
+                <!-- NOVO: Campo de playlist -->
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-list text-yt-brand mr-1"></i> Playlist (opcional)</label>
+                    <input type="text" id="up-playlist" placeholder="Nome da playlist para adicionar este vídeo" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
                 </div>
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider"><i class="fas fa-tags text-yt-brand mr-1"></i> Categorias</label>
@@ -503,6 +509,7 @@
         </div>
     </div>
 
+    <!-- Modal Edit Video (mantido igual) -->
     <div id="modal-edit-video" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleEditModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
@@ -535,6 +542,7 @@
         </div>
     </div>
 
+    <!-- Modal Report (mantido igual) -->
     <div id="modal-report" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleReportModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-md sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder rounded-t-2xl sm:rounded-2xl">
@@ -562,22 +570,42 @@
         </div>
     </div>
 
-    <!-- Modal de Edição de Perfil (aberto pelo avatar) -->
+    <!-- Modal de Edição de Perfil MELHORADO -->
     <div id="modal-edit-profile" class="fixed inset-0 z-[101] hidden flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-black/70" onclick="closeEditProfileModal()"></div>
-        <div class="bg-white dark:bg-yt-dark w-full max-w-md rounded-2xl p-6 shadow-2xl z-10 space-y-4">
+        <div class="bg-white dark:bg-yt-dark w-full max-w-md rounded-2xl p-6 shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold">Editar Perfil</h3>
+            <!-- NOVO: Preview da foto -->
+            <div class="flex justify-center">
+                <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0" id="profile-photo-preview">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
             <div>
                 <label class="text-xs font-bold uppercase text-gray-500">Nome de exibição</label>
                 <input type="text" id="edit-profile-name" class="auth-input" value="">
             </div>
             <div>
                 <label class="text-xs font-bold uppercase text-gray-500">URL da Foto de Perfil</label>
-                <input type="text" id="edit-profile-photo" class="auth-input" value="" placeholder="https://...">
+                <input type="text" id="edit-profile-photo" class="auth-input" value="" placeholder="https://..." oninput="updateProfilePhotoPreview(this.value)">
+            </div>
+            <!-- NOVO: Banner URL -->
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">URL do Banner do Canal</label>
+                <input type="text" id="edit-profile-banner" class="auth-input" value="" placeholder="https://... (imagem de fundo do canal)">
             </div>
             <div>
                 <label class="text-xs font-bold uppercase text-gray-500">Bio</label>
                 <textarea id="edit-profile-bio" class="auth-input" rows="2"></textarea>
+            </div>
+            <!-- NOVO: Links sociais -->
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">Site / Rede Social</label>
+                <input type="text" id="edit-profile-website" class="auth-input" value="" placeholder="https://seusite.com">
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">Twitter / X</label>
+                <input type="text" id="edit-profile-twitter" class="auth-input" value="" placeholder="@seunome">
             </div>
             <div class="flex justify-end gap-2">
                 <button onclick="closeEditProfileModal()" class="px-4 py-2 rounded-full font-bold text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition">Cancelar</button>
@@ -642,89 +670,60 @@
         }
 
         function setupTheme() {
-    state.theme = 'dark';
-    applyTheme();
-}
+            state.theme = 'dark';
+            applyTheme();
+        }
 
-function applyTheme() {
-    const html = document.documentElement;
-    // Garante que a classe 'dark' esteja sempre presente
-    html.classList.add('dark');
-    localStorage.setItem('theme', 'dark');
-    // (opcional) atualizar ícones, se ainda existirem botões
-}
+        function applyTheme() {
+            const html = document.documentElement;
+            html.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
 
-function toggleTheme() {
-    // Não faz nada, ou mostra um aviso
-    showToast('Tema fixo em modo escuro.', 'info');
-}
+        function toggleTheme() {
+            showToast('Tema fixo em modo escuro.', 'info');
+        }
 
-function setupExpandableDescription(element, maxHeight = 80) {
-    if (!element) return;
-    
-    // Remove qualquer botão anterior
-    const oldBtn = element.parentElement.querySelector('.expand-desc-btn');
-    if (oldBtn) oldBtn.remove();
-    
-    // Reseta estilos
-    element.style.maxHeight = 'none';
-    element.style.overflow = 'visible';
-    element.classList.remove('relative');
-    
-    // Verifica se o texto é maior que a altura máxima
-    if (element.scrollHeight <= maxHeight) return;
-    
-    // Cria o botão de expandir
-    const btn = document.createElement('button');
-    btn.className = 'expand-desc-btn text-yt-brand font-bold text-xs mt-1 hover:underline';
-    btn.innerText = 'Mostrar mais';
-    
-    // Define o estado inicial (recolhido)
-    let isExpanded = false;
-    element.style.maxHeight = maxHeight + 'px';
-    element.style.overflow = 'hidden';
-    element.style.position = 'relative';
-    
-    // Adiciona uma máscara de gradiente (opcional, para estética)
-    const mask = document.createElement('div');
-    mask.className = 'desc-mask';
-    mask.style.cssText = `
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 40px;
-        background: linear-gradient(transparent, var(--mask-bg, #f3f4f6));
-        pointer-events: none;
-    `;
-    // Ajusta cor de fundo conforme tema (dark/light)
-    if (document.documentElement.classList.contains('dark')) {
-        mask.style.setProperty('--mask-bg', '#272727');
-    } else {
-        mask.style.setProperty('--mask-bg', '#f3f4f6');
-    }
-    element.appendChild(mask);
-    
-    // Insere o botão após o elemento
-    element.parentElement.appendChild(btn);
-    
-    // Evento de clique
-    btn.addEventListener('click', () => {
-        isExpanded = !isExpanded;
-        if (isExpanded) {
-            element.style.maxHeight = element.scrollHeight + 'px';
+        function setupExpandableDescription(element, maxHeight = 80) {
+            if (!element) return;
+            const oldBtn = element.parentElement.querySelector('.expand-desc-btn');
+            if (oldBtn) oldBtn.remove();
+            element.style.maxHeight = 'none';
             element.style.overflow = 'visible';
-            btn.innerText = 'Mostrar menos';
-            if (mask) mask.style.display = 'none';
-        } else {
+            element.classList.remove('relative');
+            if (element.scrollHeight <= maxHeight) return;
+            const btn = document.createElement('button');
+            btn.className = 'expand-desc-btn text-yt-brand font-bold text-xs mt-1 hover:underline';
+            btn.innerText = 'Mostrar mais';
+            let isExpanded = false;
             element.style.maxHeight = maxHeight + 'px';
             element.style.overflow = 'hidden';
-            btn.innerText = 'Mostrar mais';
-            if (mask) mask.style.display = 'block';
+            element.style.position = 'relative';
+            const mask = document.createElement('div');
+            mask.className = 'desc-mask';
+            mask.style.cssText = `position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, var(--mask-bg, #f3f4f6)); pointer-events: none;`;
+            if (document.documentElement.classList.contains('dark')) {
+                mask.style.setProperty('--mask-bg', '#272727');
+            } else {
+                mask.style.setProperty('--mask-bg', '#f3f4f6');
+            }
+            element.appendChild(mask);
+            element.parentElement.appendChild(btn);
+            btn.addEventListener('click', () => {
+                isExpanded = !isExpanded;
+                if (isExpanded) {
+                    element.style.maxHeight = element.scrollHeight + 'px';
+                    element.style.overflow = 'visible';
+                    btn.innerText = 'Mostrar menos';
+                    if (mask) mask.style.display = 'none';
+                } else {
+                    element.style.maxHeight = maxHeight + 'px';
+                    element.style.overflow = 'hidden';
+                    btn.innerText = 'Mostrar mais';
+                    if (mask) mask.style.display = 'block';
+                }
+            });
         }
-    });
-}
-
 
         // =============================================
         // AUTENTICAÇÃO
@@ -760,6 +759,9 @@ function setupExpandableDescription(element, maxHeight = 80) {
                         displayName: state.currentUser.displayName || '',
                         photoURL: state.currentUser.photoURL || '',
                         bio: '',
+                        bannerURL: '',
+                        website: '',
+                        twitter: '',
                         createdAt: new Date()
                     };
                     await window.firestoreHelpers.setDoc(doc(window.db, 'users', state.currentUser.uid), state.userProfile);
@@ -770,6 +772,9 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     displayName: state.currentUser.displayName || '',
                     photoURL: state.currentUser.photoURL || '',
                     bio: '',
+                    bannerURL: '',
+                    website: '',
+                    twitter: '',
                     createdAt: new Date()
                 };
             }
@@ -843,7 +848,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 navigateTo('auth');
                 return;
             }
-            // Abre modal de edição de perfil
             openEditProfileModal();
         }
 
@@ -949,7 +953,7 @@ function setupExpandableDescription(element, maxHeight = 80) {
         }
 
         // =============================================
-        // PERFIL
+        // PERFIL MELHORADO
         // =============================================
         async function renderProfile() {
             if (!state.currentUser) { navigateTo('auth'); return; }
@@ -957,8 +961,17 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const container = document.getElementById('profile-content');
             const p = state.userProfile || {};
             const myVideos = state.allVideos.filter(v => v.uploaderId === state.currentUser.uid);
+            // NOVO: Agrupar por playlist
+            const playlists = {};
+            myVideos.forEach(v => {
+                const pl = v.playlist || 'Sem playlist';
+                if (!playlists[pl]) playlists[pl] = [];
+                playlists[pl].push(v);
+            });
             container.innerHTML = `
                 <div class="bg-white dark:bg-yt-darkHover rounded-2xl p-6 shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder">
+                    <!-- Banner -->
+                    ${p.bannerURL ? `<div class="w-full h-32 sm:h-48 rounded-xl overflow-hidden mb-4"><img src="${p.bannerURL}" class="w-full h-full object-cover"></div>` : ''}
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                         <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0">
                             ${p.photoURL ? `<img src="${p.photoURL}" class="w-full h-full object-cover">` : (p.displayName ? p.displayName[0].toUpperCase() : 'U')}
@@ -966,16 +979,33 @@ function setupExpandableDescription(element, maxHeight = 80) {
                         <div>
                             <h2 class="text-xl font-bold">${p.displayName || 'Usuário'}</h2>
                             <p class="text-sm text-gray-500">${p.bio || 'Nenhuma bio ainda.'}</p>
-                            <p class="text-xs text-gray-400 mt-1">${myVideos.length} vídeos publicados</p>
+                            ${p.website ? `<a href="${p.website}" target="_blank" class="text-xs text-yt-brand hover:underline block">${p.website}</a>` : ''}
+                            ${p.twitter ? `<p class="text-xs text-blue-400">@${p.twitter}</p>` : ''}
+                            <p class="text-xs text-gray-400 mt-1">${myVideos.length} vídeos • ${await getSubscriberCount(state.currentUser.uid)} inscritos</p>
                         </div>
                         <button onclick="openEditProfileModal()" class="ml-auto bg-gray-200 dark:bg-yt-darkHover px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition"><i class="fas fa-edit mr-1"></i> Editar Perfil</button>
                     </div>
-                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-video text-yt-brand"></i> Meus Vídeos</h3>
+                    <!-- NOVO: Seções de playlists -->
+                    ${Object.keys(playlists).length > 0 ? Object.entries(playlists).map(([plName, plVideos]) => `
+                        <h3 class="font-bold text-lg mb-4 mt-6"><i class="fas fa-list text-yt-brand"></i> ${plName} (${plVideos.length})</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${plVideos.map(v => `
+                                <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
+                                    <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
+                                        ${v.thumbnailURL ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`}
+                                    </div>
+                                    <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                                    <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('') : ''}
+                    <h3 class="font-bold text-lg mb-4 mt-6"><i class="fas fa-video text-yt-brand"></i> Todos os Vídeos</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="my-videos-grid">
                         ${myVideos.length === 0 ? '<p class="text-gray-500 col-span-full py-4 text-center">Você ainda não publicou nenhum vídeo.</p>' : myVideos.map(v => `
                             <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                                 <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
-                                    <video class="video-thumbnail" src="${v.url}#t=1"></video>
+                                    ${v.thumbnailURL ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`}
                                 </div>
                                 <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
                                 <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
@@ -986,11 +1016,45 @@ function setupExpandableDescription(element, maxHeight = 80) {
             `;
         }
 
+        // NOVO: Função para obter frame do meio
+        function getMiddleFrame(video) {
+            // Retorna um valor padrão para o parâmetro #t (metade da duração)
+            if (video.durationSeconds) {
+                return Math.floor(video.durationSeconds / 2);
+            }
+            return 30; // valor padrão de 30 segundos
+        }
+
+        // NOVO: Contar inscritos de um usuário
+        async function getSubscriberCount(userId) {
+            try {
+                const q = window.firestoreHelpers.query(
+                    window.firestoreHelpers.collection(window.db, 'follows'),
+                    window.firestoreHelpers.where('followedId', '==', userId)
+                );
+                const snap = await window.firestoreHelpers.getDocs(q);
+                return snap.size;
+            } catch (e) {
+                return 0;
+            }
+        }
+
+        // NOVO: Atualizar contagem de inscritos no player
+        async function updateSubscriberDisplay(uploaderId) {
+            const count = await getSubscriberCount(uploaderId);
+            const el = document.getElementById('player-uploader-subs');
+            if (el) el.innerText = `${count} inscritos`;
+        }
+
         function openEditProfileModal() {
             const p = state.userProfile || {};
             document.getElementById('edit-profile-name').value = p.displayName || '';
             document.getElementById('edit-profile-photo').value = p.photoURL || '';
             document.getElementById('edit-profile-bio').value = p.bio || '';
+            document.getElementById('edit-profile-banner').value = p.bannerURL || '';
+            document.getElementById('edit-profile-website').value = p.website || '';
+            document.getElementById('edit-profile-twitter').value = p.twitter || '';
+            updateProfilePhotoPreview(p.photoURL || '');
             document.getElementById('modal-edit-profile').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
@@ -1000,13 +1064,27 @@ function setupExpandableDescription(element, maxHeight = 80) {
             document.body.style.overflow = '';
         }
 
+        // NOVO: Preview da foto no modal
+        function updateProfilePhotoPreview(url) {
+            const preview = document.getElementById('profile-photo-preview');
+            if (!preview) return;
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+            } else {
+                const name = document.getElementById('edit-profile-name').value || 'U';
+                preview.innerHTML = name[0].toUpperCase();
+            }
+        }
+
         async function saveProfile() {
             const name = document.getElementById('edit-profile-name').value.trim();
             const photo = document.getElementById('edit-profile-photo').value.trim();
             const bio = document.getElementById('edit-profile-bio').value.trim();
+            const banner = document.getElementById('edit-profile-banner').value.trim();
+            const website = document.getElementById('edit-profile-website').value.trim();
+            const twitter = document.getElementById('edit-profile-twitter').value.trim();
             if (!name) return showToast('Nome é obrigatório.', 'error');
 
-            // Verificar unicidade do nome
             try {
                 const { getDocs, query, collection, where, doc, updateDoc } = window.firestoreHelpers;
                 const q = query(collection(window.db, 'users'), where('displayName', '==', name));
@@ -1017,12 +1095,13 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 await updateDoc(doc(window.db, 'users', state.currentUser.uid), {
                     displayName: name,
                     photoURL: photo,
-                    bio: bio
+                    bio: bio,
+                    bannerURL: banner,
+                    website: website,
+                    twitter: twitter
                 });
                 await updateProfile(state.currentUser, { displayName: name, photoURL: photo });
-                state.userProfile.displayName = name;
-                state.userProfile.photoURL = photo;
-                state.userProfile.bio = bio;
+                state.userProfile = { ...state.userProfile, displayName: name, photoURL: photo, bio, bannerURL: banner, website, twitter };
                 updateAuthUI();
                 if (document.getElementById('page-profile').classList.contains('active')) renderProfile();
                 closeEditProfileModal();
@@ -1115,7 +1194,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 state.allVideos = [];
             }
             renderVideoGrid();
-            // Atualiza durações nos cards
             updateAllDurations();
         }
 
@@ -1143,12 +1221,14 @@ function setupExpandableDescription(element, maxHeight = 80) {
             grid.innerHTML = filtered.map(v => {
                 const uploaderPhoto = v.uploaderPhotoURL || '';
                 const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
+                // NOVO: Usa thumbnailURL se existir, senão usa frame do meio
+                const thumbSrc = v.thumbnailURL 
+                    ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
+                    : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}" preload="metadata"></video>`;
                 return `
                 <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
-                
                     <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-all duration-300">
-                        <video class="video-thumbnail" src="${v.url}#t=1" preload="metadata"></video>
-                        
+                        ${thumbSrc}
                         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl drop-shadow-lg"></i>
                         </div>
@@ -1170,7 +1250,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 `;
             }).join('');
 
-            // Atualiza as durações dos cards recém-renderizados
             requestAnimationFrame(() => {
                 updateAllDurations();
             });
@@ -1186,6 +1265,8 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     tempVideo.addEventListener('loadedmetadata', function() {
                         if (tempVideo.duration && isFinite(tempVideo.duration)) {
                             el.textContent = formatTime(tempVideo.duration);
+                            // Salva a duração para uso posterior (thumbnail do meio)
+                            v.durationSeconds = tempVideo.duration;
                         } else {
                             el.textContent = '';
                         }
@@ -1201,15 +1282,20 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const sorted = [...state.allVideos].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 20);
             grid.innerHTML = sorted.length === 0 
                 ? '<p class="text-gray-500 col-span-full text-center py-8">Nenhum vídeo em alta.</p>'
-                : sorted.map(v => `
+                : sorted.map(v => {
+                    const thumbSrc = v.thumbnailURL 
+                        ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
+                        : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`;
+                    return `
                     <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                         <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
-                            <video class="video-thumbnail" src="${v.url}#t=1"></video>
+                            ${thumbSrc}
                         </div>
                         <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
                         <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
         }
 
         async function openVideo(id) {
@@ -1227,13 +1313,15 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 document.getElementById('player-uploader-name').innerText = video.uploaderName || 'Uploader';
                 document.getElementById('likes-count').innerText = video.likes || 0;
                 document.getElementById('dislikes-count').innerText = video.dislikes || 0;
-                // Avatar do uploader
                 const avatarEl = document.getElementById('player-uploader-avatar');
                 if (video.uploaderPhotoURL) {
                     avatarEl.innerHTML = `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover">`;
                 } else {
                     avatarEl.innerHTML = video.uploaderName ? video.uploaderName[0].toUpperCase() : 'U';
                 }
+
+                // NOVO: Atualizar contagem de inscritos
+                await updateSubscriberDisplay(video.uploaderId);
 
                 try {
                     await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), {
@@ -1269,10 +1357,14 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const list = document.getElementById('recommended-list');
             if (!list) return;
             const recs = state.allVideos.filter(v => v.id !== state.currentVideoId).slice(0, 10);
-            list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => `
+            list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => {
+                const thumbSrc = v.thumbnailURL 
+                    ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
+                    : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}" preload="metadata"></video>`;
+                return `
                 <div class="flex gap-3 mb-4 cursor-pointer group" onclick="openVideo('${v.id}')">
                     <div class="w-40 aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden flex-shrink-0 relative">
-                        <video class="video-thumbnail" src="${v.url}#t=1" preload="metadata"></video>
+                        ${thumbSrc}
                         <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}"></div>
                     </div>
                     <div class="min-w-0">
@@ -1281,9 +1373,9 @@ function setupExpandableDescription(element, maxHeight = 80) {
                         <p class="text-[10px] text-gray-400">${v.views || 0} visualizações</p>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
-            // Atualiza durações dos recomendados
             requestAnimationFrame(() => {
                 recs.forEach(v => {
                     const el = document.getElementById(`rec-duration-${v.id}`);
@@ -1354,7 +1446,7 @@ function setupExpandableDescription(element, maxHeight = 80) {
         }
 
         // =============================================
-        // UPLOAD
+        // UPLOAD (ATUALIZADO COM THUMBNAIL E PLAYLIST)
         // =============================================
         function toggleUploadModal(show) {
             if (show && !state.currentUser) return navigateTo('auth');
@@ -1365,6 +1457,8 @@ function setupExpandableDescription(element, maxHeight = 80) {
                 document.getElementById('up-url').value = '';
                 document.getElementById('up-title').value = '';
                 document.getElementById('up-desc').value = '';
+                document.getElementById('up-thumbnail-url').value = '';
+                document.getElementById('up-playlist').value = '';
                 document.querySelectorAll('.category-checkbox').forEach(c => c.checked = false);
                 document.getElementById('thumbnail-preview').innerHTML = '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
                 const agreeTerms = document.getElementById('agree-terms');
@@ -1375,8 +1469,27 @@ function setupExpandableDescription(element, maxHeight = 80) {
         function previewThumbnail(url) {
             const preview = document.getElementById('thumbnail-preview');
             if (!preview) return;
-            if (url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov'))) {
-                preview.innerHTML = `<video class="w-full h-full object-cover" src="${url}#t=1"></video>`;
+            const customThumb = document.getElementById('up-thumbnail-url').value;
+            if (customThumb && (customThumb.startsWith('http://') || customThumb.startsWith('https://'))) {
+                preview.innerHTML = `<img src="${customThumb}" class="w-full h-full object-cover">`;
+            } else if (url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov'))) {
+                preview.innerHTML = `<video class="w-full h-full object-cover" src="${url}#t=30"></video>`;
+            }
+        }
+
+        // NOVO: Preview da thumbnail personalizada
+        function previewCustomThumbnail(url) {
+            const preview = document.getElementById('thumbnail-preview');
+            if (!preview) return;
+            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+            } else {
+                const videoUrl = document.getElementById('up-url').value;
+                if (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov'))) {
+                    preview.innerHTML = `<video class="w-full h-full object-cover" src="${videoUrl}#t=30"></video>`;
+                } else {
+                    preview.innerHTML = '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
+                }
             }
         }
 
@@ -1387,12 +1500,14 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const url = document.getElementById('up-url').value;
             const title = document.getElementById('up-title').value;
             const desc = document.getElementById('up-desc').value;
+            const thumbnailURL = document.getElementById('up-thumbnail-url').value.trim();
+            const playlist = document.getElementById('up-playlist').value.trim();
             const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
 
             if (!url || !title || selectedCats.length === 0) return showToast('Preencha os campos obrigatórios', 'error');
 
             try {
-                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), {
+                const videoData = {
                     url, title, description: desc,
                     categories: selectedCats,
                     uploaderId: state.currentUser.uid,
@@ -1400,7 +1515,16 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
                     views: 0, likes: 0, dislikes: 0, likedBy: [], dislikedBy: [],
                     createdAt: window.firestoreHelpers.serverTimestamp()
-                });
+                };
+                // NOVO: Adiciona thumbnailURL se fornecida
+                if (thumbnailURL) {
+                    videoData.thumbnailURL = thumbnailURL;
+                }
+                // NOVO: Adiciona playlist se fornecida
+                if (playlist) {
+                    videoData.playlist = playlist;
+                }
+                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), videoData);
                 showToast('Vídeo publicado!');
                 toggleUploadModal(false);
                 await loadVideos();
@@ -1416,7 +1540,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const vidRef = window.firestoreHelpers.doc(window.db, 'videos', id);
             const userRef = window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid);
 
-            // Se já deu dislike, remove o dislike primeiro
             if (state.dislikedVideos.includes(id)) {
                 await window.firestoreHelpers.updateDoc(vidRef, {
                     dislikes: window.firestoreHelpers.increment(-1),
@@ -1449,7 +1572,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     });
                     state.likedVideos.push(id);
                 }
-                // Recarrega dados do vídeo
                 const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
                 state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
                 document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
@@ -1465,7 +1587,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
             const vidRef = window.firestoreHelpers.doc(window.db, 'videos', id);
             const userRef = window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid);
 
-            // Se já deu like, remove o like primeiro
             if (state.likedVideos.includes(id)) {
                 await window.firestoreHelpers.updateDoc(vidRef, {
                     likes: window.firestoreHelpers.increment(-1),
@@ -1498,7 +1619,6 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     });
                     state.dislikedVideos.push(id);
                 }
-                // Recarrega dados do vídeo
                 const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
                 state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
                 document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
@@ -1546,6 +1666,8 @@ function setupExpandableDescription(element, maxHeight = 80) {
                     });
                     state.following.push(targetId);
                 }
+                // NOVO: Atualiza contagem de inscritos
+                await updateSubscriberDisplay(targetId);
                 updateFollowButton();
                 showToast(isFollowing ? 'Inscrição cancelada' : 'Inscrição realizada!');
             } catch (e) { console.error(e); }
