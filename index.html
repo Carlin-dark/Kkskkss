@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AnimeStream - Hub de Conteúdo</title>
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { 
+            getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, increment, getDoc, setDoc 
+        } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+        import { 
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, onAuthStateChanged, GoogleAuthProvider, signInWithPopup 
+        } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAw0YMvJALs2oD6yVZn1a94vu1PpnClsI",
+            authDomain: "vibtube-927d7.firebaseapp.com",
+            projectId: "vibtube-927d7",
+            storageBucket: "vibtube-927d7.firebasestorage.app",
+            messagingSenderId: "81266811806",
+            appId: "1:81266811806:web:153feb3c86bd28b8e62c8f"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.auth = getAuth(app);
+        window.storage = getStorage(app);
+        
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.signOut = signOut;
+        window.updateProfile = updateProfile;
+        
+        window.firestoreHelpers = {
+            collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, increment, getDoc, setDoc
+        };
+        
+        console.log('Firebase inicializado com sucesso (vibtube-927d7)');
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #6b7280; border-radius: 3px; }
+        
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .footer-hidden { display: none !important; }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .category-checkbox:checked+label {
+            background-color: #f97316;
+            color: white;
+            border-color: #f97316;
+        }
+
+        .video-thumbnail {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .video-player-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .custom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.95));
+            padding: 40px 12px 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .video-player-container:hover .custom-controls,
+        .custom-controls.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: height 0.2s;
+        }
+
+        .progress-container:hover { height: 5px; }
+
+        .progress-bar {
+            height: 100%;
+            background: #f97316;
+            border-radius: 2px;
+            transition: width 0.1s linear;
+        }
+
+        .control-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            min-height: 36px;
+        }
+
+        .control-btn:hover { background: rgba(255,255,255,0.2); }
+
+        @media (max-width: 640px) {
+            .video-player-container {
+                border-radius: 0;
+                margin: -16px -16px 16px;
+                width: calc(100% + 32px);
+            }
+        }
+
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e5e5;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-size: 14px;
+        }
+        .dark .auth-input {
+            background: #272727;
+            border-color: #3f3f3f;
+            color: white;
+        }
+        .auth-input:focus {
+            border-color: #f97316;
+        }
+        
+        .google-btn {
+            background: white;
+            color: #374151;
+            border: 1px solid #e5e5e5;
+            transition: all 0.2s;
+        }
+        .dark .google-btn {
+            background: #ffffff;
+            color: #1f2937;
+            border: none;
+        }
+        .google-btn:hover {
+            background: #f9fafb;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        /* ===== FALLBACK TEMA ESCURO (garante que funcione mesmo sem a classe 'dark') ===== */
+    body, 
+    .bg-yt-light, 
+    .bg-yt-dark,
+    nav, aside, main, footer,
+    .modal-upload, .modal-edit-video, .modal-report, .modal-edit-profile,
+    .bg-white, .bg-gray-100, .bg-gray-50,
+    .dark\:bg-yt-darkHover, .dark\:bg-yt-darkBorder, .dark\:bg-yt-dark {
+        background-color: #0f0f0f !important;
+        color: #f1f5f9 !important;
+    }
+
+    /* Ajustes específicos para elementos que precisam de contraste */
+    .auth-input, .google-btn, .chip, .category-checkbox + label {
+        background-color: #1e1e1e !important;
+        color: #e5e5e5 !important;
+        border-color: #3f3f3f !important;
+    }
+
+    .google-btn:hover {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    /* Links e ícones no tema escuro */
+    a, button:not(.bg-yt-brand):not(.bg-red-500) {
+        color: #e5e5e5 !important;
+    }
+    a:hover, button:hover {
+        color: #f97316 !important;
+    }
+
+    /* Cards e containers */
+    .bg-white, .bg-gray-100, .bg-gray-50 {
+        background-color: #272727 !important;
+    }
+    .dark\:bg-yt-darkHover {
+        background-color: #272727 !important;
+    }
+
+    /* Exceções para elementos que precisam de cores claras (ex: modais internos) */
+    .modal-upload .bg-white, .modal-edit-video .bg-white, .modal-report .bg-white, .modal-edit-profile .bg-white {
+        background-color: #1a1a1a !important;
+    }
+    .modal-upload .bg-gray-50, .modal-edit-video .bg-gray-50 {
+        background-color: #0f0f0f !important;
+    }
+
+    /* Manter botão "Publicar" laranja */
+    .bg-yt-brand {
+        background-color: #f97316 !important;
+        color: white !important;
+    }
+    .bg-red-500 {
+        background-color: #ef4444 !important;
+        color: white !important;
+    }
+        
+    </style>
+</head>
+<body class="bg-yt-light dark:bg-yt-dark text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 overflow-x-hidden">
+
+    <nav class="fixed top-0 left-0 right-0 h-14 sm:h-16 bg-yt-light/95 dark:bg-yt-dark/95 backdrop-blur-md border-b border-yt-lightBorder dark:border-yt-darkBorder flex items-center justify-between px-3 sm:px-4 z-50">
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button id="btn-hamburger" onclick="toggleSidebar()" class="p-2 rounded-full hover:bg-yt-lightHover dark:hover:bg-yt-darkHover transition active:scale-95">
+                <i class="fas fa-bars text-lg sm:text-xl"></i>
+            </button>
+            <div class="flex items-center gap-1.5 sm:gap-2 cursor-pointer" onclick="navigateTo('home')">
+                <i class="fas fa-play-circle text-yt-brand text-2xl sm:text-3xl"></i>
+                <span class="text-lg sm:text-xl font-bold tracking-tighter">Anime<span class="text-yt-brand">Stream</span></span>
+            </div>
+        </div>
+
+        <div class="flex-1 max-w-xl px-2 sm:px-4 flex items-center">
+            <div class="flex w-full bg-yt-lightHover dark:bg-yt-darkHover rounded-full border border-yt-lightBorder dark:border-yt-darkBorder overflow-hidden focus-within:border-orange-500 transition-all duration-300">
+                <input type="text" id="search-input" placeholder="O que vamos assistir?" 
+                       class="w-full bg-transparent px-3 sm:px-5 py-2 sm:py-2.5 outline-none text-xs sm:text-sm min-w-0" 
+                       onkeyup="handleSearchInput(this.value)" autocomplete="off">
+                <button onclick="handleSearch()" class="px-3 sm:px-5 bg-gray-200 dark:bg-[#222] hover:bg-gray-300 dark:hover:bg-[#333] border-l border-yt-lightBorder dark:border-yt-darkBorder transition active:scale-95">
+                    <i class="fas fa-search text-sm sm:text-base"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1 sm:gap-3">
+            <button onclick="toggleUploadModal(true)" class="hidden sm:flex items-center gap-1.5 bg-yt-brand text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-medium text-xs sm:text-sm hover:brightness-110 transition active:scale-95">
+                <i class="fas fa-plus text-xs"></i>
+                <span>Criar</span>
+            </button>
+            <div id="user-avatar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand text-white flex items-center justify-center font-bold shadow-md cursor-pointer hover:scale-105 transition text-sm sm:text-base overflow-hidden" onclick="handleAvatarClick()">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/70 z-40 hidden transition-opacity duration-300"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 bottom-0 w-72 sm:w-64 bg-yt-light dark:bg-yt-dark border-r border-yt-lightBorder dark:border-yt-darkBorder overflow-y-auto z-40 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl pt-14 sm:pt-16">
+        <div class="py-2 sm:py-3 flex flex-col gap-0.5 sm:gap-1">
+            <a href="#" onclick="navigateTo('home'); toggleSidebar()" class="flex items-center px-5 sm:px-6 py-2.5 sm:py-3 hover:bg-yt-lightHover dark:hover:bg-yt-darkHover gap-3 sm:gap-4 rounded-lg mx-2 transition text-sm sm:text-base" data-page="home">
+                <i class="fas fa-home w-5 sm:w-6 text-center"></i>
+                <span class="font-medium">Início</span>
+            </a>
+            <a href="#" onclick="navigateTo('trending'); toggleSidebar()" class="flex items-center px-5 sm:px-6 py-2.5 sm:py-3 hover:bg-yt-lightHover dark:hover:bg-yt-darkHover gap-3 sm:gap-4 rounded-lg mx-2 transition text-sm sm:text-base" data-page="trending">
+                <i class="fas fa-fire w-5 sm:w-6 text-center"></i>
+                <span class="font-medium">Em Alta</span>
+            </a>
+            <div class="px-5 sm:px-6 py-2 sm:py-3 text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider">Categorias</div>
+            <div id="sidebar-categories"></div>
+            <hr class="border-yt-lightBorder dark:border-yt-darkBorder my-2 sm:my-3 mx-3 sm:mx-4">
+            <div id="sidebar-auth-section"></div>
+            <hr class="border-yt-lightBorder dark:border-yt-darkBorder my-2 sm:my-3 mx-3 sm:mx-4">
+            <button onclick="toggleTheme()" class="w-full flex items-center px-5 sm:px-6 py-2.5 sm:py-3 hover:bg-yt-lightHover dark:hover:bg-yt-darkHover gap-3 sm:gap-4 text-left rounded-lg mx-2 transition text-sm sm:text-base">
+                <i id="theme-icon" class="fas fa-moon w-5 sm:w-6 text-center"></i>
+                <span id="theme-text" class="font-medium">Modo Escuro</span>
+            </button>
+        </div>
+    </aside>
+
+    <main id="main-content" class="pt-14 sm:pt-16 min-h-screen transition-all duration-300 pb-20 sm:pb-24">
+        
+        <div id="page-home" class="page active">
+            <div id="search-indicator" class="hidden bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                <span id="search-indicator-text"></span>
+                <button onclick="clearSearch()" class="ml-2 text-yt-brand hover:underline font-medium">Limpar</button>
+            </div>
+            <div class="sticky top-14 sm:top-16 bg-yt-light dark:bg-yt-dark/95 backdrop-blur z-30 py-2 sm:py-3 px-3 sm:px-4 border-b border-yt-lightBorder dark:border-yt-darkBorder flex gap-2 sm:gap-3 overflow-x-auto hide-scroll" id="category-chips"></div>
+            <div class="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-5" id="video-grid"></div>
+            <div id="no-results" class="hidden text-center py-16 sm:py-20 px-4">
+                <i class="fas fa-video text-4xl sm:text-6xl text-gray-300 dark:text-gray-600 mb-3 sm:mb-4"></i>
+                <h3 class="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Nenhum vídeo encontrado</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Seja o primeiro a publicar!</p>
+            </div>
+        </div>
+
+        <div id="page-player" class="page">
+            <div class="max-w-[1600px] mx-auto">
+                <div class="flex flex-col lg:flex-row lg:gap-6 lg:p-6">
+                    <div class="lg:w-[70%]">
+                        <div class="video-player-container aspect-video" id="player-container">
+                            <video id="html-player" playsinline webkit-playsinline class="w-full h-full" onclick="togglePlay()"></video>
+                            <div class="custom-controls" id="custom-controls">
+                                <div class="progress-container" id="progress-container" onclick="seekVideo(event)" ontouchstart="seekVideo(event)">
+                                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <button class="control-btn" onclick="togglePlay()" id="play-btn"><i class="fas fa-pause text-sm sm:text-base"></i></button>
+                                        <button class="control-btn hidden xs:flex" onclick="skipTime(-10)"><i class="fas fa-rotate-left text-xs sm:text-sm"></i><span class="text-[10px] sm:text-xs ml-1">10s</span></button>
+                                        <button class="control-btn hidden xs:flex" onclick="skipTime(10)"><span class="text-[10px] sm:text-xs mr-1">10s</span><i class="fas fa-rotate-right text-xs sm:text-sm"></i></button>
+                                        <div class="control-btn group relative" id="volume-btn">
+                                            <i class="fas fa-volume-up text-sm"></i>
+                                            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-20 h-1 accent-yt-brand" oninput="changeVolume(this.value)">
+                                        </div>
+                                        <span class="text-white text-[10px] sm:text-xs ml-1" id="time-display">0:00 / 0:00</span>
+                                    </div>
+                                    <div class="flex items-center gap-1 sm:gap-2">
+                                        <button class="control-btn" onclick="togglePiP()" title="Picture-in-Picture"><i class="fas fa-window-restore text-xs sm:text-sm"></i></button>
+                                        <button class="control-btn" onclick="changePlaybackSpeed()" id="speed-btn"><span class="text-[10px] sm:text-xs font-bold">1x</span></button>
+                                        <button class="control-btn" onclick="toggleFullscreen()"><i class="fas fa-expand text-xs sm:text-sm"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-3 sm:px-0 mt-3 sm:mt-4">
+                            <div class="flex items-center justify-between">
+                                <h1 id="player-title" class="text-lg sm:text-2xl font-bold leading-tight flex-1"></h1>
+                                <div id="player-edit-buttons" class="hidden flex gap-2 ml-2"></div>
+                            </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-3 sm:mt-4 gap-3">
+                                <div class="flex items-center gap-2 sm:gap-3">
+                                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden" id="player-uploader-avatar">U</div>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-sm sm:text-base truncate" id="player-uploader-name">Uploader</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-500" id="player-uploader-subs">0 inscritos</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                    <button id="btn-follow" onclick="toggleFollow()" class="bg-white text-black px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 transition active:scale-95 flex items-center gap-1.5">
+                                        <i class="fas fa-bell text-xs"></i> <span id="btn-follow-text">Inscrever-se</span>
+                                    </button>
+                                    <div class="flex bg-gray-200 dark:bg-yt-darkHover rounded-full overflow-hidden">
+                                        <button id="btn-like" onclick="toggleLike()" class="px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition flex items-center gap-1.5 text-xs sm:text-sm font-medium">
+                                            <i class="fas fa-thumbs-up"></i> <span id="likes-count">0</span>
+                                        </button>
+                                        <div class="w-px bg-gray-300 dark:bg-gray-600"></div>
+                                        <button id="btn-dislike" onclick="toggleDislike()" class="px-3 sm:px-4 py-2 sm:py-2.5 hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition">
+                                            <i class="fas fa-thumbs-down text-xs sm:text-sm"></i> <span id="dislikes-count">0</span>
+                                        </button>
+                                    </div>
+                                    <button onclick="shareVideo()" class="bg-gray-200 dark:bg-yt-darkHover px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition flex items-center gap-1.5 text-xs sm:text-sm font-medium">
+                                        <i class="fas fa-share"></i> <span class="hidden xs:inline">Compartilhar</span>
+                                    </button>
+                                    <button onclick="reportVideo()" class="bg-gray-200 dark:bg-yt-darkHover px-3 sm:px-4 py-2 sm:py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition flex items-center gap-1.5 text-xs sm:text-sm font-medium">
+                                        <i class="fas fa-flag"></i> <span class="hidden xs:inline">Denunciar</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3 sm:mt-4 p-3 sm:p-5 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
+                                <p id="player-desc" class="text-xs sm:text-sm leading-relaxed whitespace-pre-line"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:w-[30%] mt-4 lg:mt-0 px-3 pb-3 sm:px-0" id="recommended-list"></div>
+                </div>
+                <div class="fixed top-14 sm:top-16 left-0 right-0 bg-yt-light/95 dark:bg-yt-dark/95 backdrop-blur-md border-b border-yt-lightBorder dark:border-yt-darkBorder px-3 py-1.5 z-20 lg:hidden">
+                    <button onclick="navigateTo('home')" class="flex items-center gap-1.5 text-yt-brand hover:underline text-sm font-medium">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-profile" class="page p-4 max-w-4xl mx-auto">
+            <div id="profile-content"></div>
+        </div>
+
+        <div id="page-auth" class="page p-4 max-w-md mx-auto mt-8 sm:mt-12">
+            <div id="auth-content" class="bg-white dark:bg-yt-darkHover p-6 sm:p-8 rounded-3xl shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder slide-up">
+                </div>
+        </div>
+
+        <div id="page-trending" class="page p-4">
+            <h2 class="text-2xl font-bold mb-6"><i class="fas fa-fire text-yt-brand"></i> Em Alta</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="trending-grid"></div>
+        </div>
+
+    </main>
+
+    <footer id="app-footer" class="fixed bottom-0 left-0 right-0 h-14 sm:h-16 bg-yt-light/95 dark:bg-yt-dark/95 backdrop-blur-md border-t border-yt-lightBorder dark:border-yt-darkBorder flex items-center justify-around px-2 z-50 lg:hidden">
+        <button onclick="navigateTo('home')" class="flex flex-col items-center text-gray-500 hover:text-yt-brand transition active:scale-90" data-page="home">
+            <i class="fas fa-home text-lg"></i>
+            <span class="text-[9px] sm:text-[10px]">Início</span>
+        </button>
+        <button onclick="navigateTo('trending')" class="flex flex-col items-center text-gray-500 hover:text-yt-brand transition active:scale-90" data-page="trending">
+            <i class="fas fa-fire text-lg"></i>
+            <span class="text-[9px] sm:text-[10px]">Em Alta</span>
+        </button>
+        <div class="relative -top-4 sm:-top-5">
+            <button onclick="toggleUploadModal(true)" class="w-12 h-12 sm:w-14 sm:h-14 bg-yt-brand text-white rounded-full shadow-2xl flex items-center justify-center text-xl sm:text-2xl border-[3px] border-yt-light dark:border-yt-dark hover:scale-105 active:scale-90 transition-all">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        <button onclick="navigateTo('profile')" class="flex flex-col items-center text-gray-500 hover:text-yt-brand transition active:scale-90" data-page="profile">
+            <i class="fas fa-bookmark text-lg"></i>
+            <span class="text-[9px] sm:text-[10px]">Biblioteca</span>
+        </button>
+        <button onclick="toggleTheme()" class="flex flex-col items-center text-gray-500 hover:text-yt-brand transition active:scale-90">
+            <i id="theme-icon-mobile" class="fas fa-moon text-lg"></i>
+            <span class="text-[9px] sm:text-[10px]">Tema</span>
+        </button>
+    </footer>
+
+    <div id="modal-upload" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="fixed inset-0 modal-overlay" onclick="toggleUploadModal(false)"></div>
+        <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
+            <div class="p-4 sm:p-6 border-b border-yt-lightBorder dark:border-yt-darkBorder flex justify-between items-center bg-white dark:bg-yt-dark sticky top-0">
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2"><i class="fas fa-cloud-upload-alt text-yt-brand"></i> Enviar vídeo</h2>
+                <button onclick="toggleUploadModal(false)" class="p-2 hover:bg-gray-200 dark:hover:bg-yt-darkHover rounded-full transition active:scale-90"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5 bg-gray-50 dark:bg-[#1a1a1a]">
+                <div class="bg-black rounded-xl overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
+                    <div id="thumbnail-preview" class="aspect-video flex items-center justify-center bg-gray-900">
+                        <div class="text-center"><i class="fas fa-image text-4xl sm:text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-link text-yt-brand mr-1"></i> URL do Vídeo</label>
+                        <input type="text" id="up-url" placeholder="https://exemplo.com/video.mp4" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition" oninput="previewThumbnail(this.value)">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-heading text-yt-brand mr-1"></i> Título</label>
+                        <input type="text" id="up-title" placeholder="Adicione um título descritivo" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição</label>
+                    <textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider"><i class="fas fa-tags text-yt-brand mr-1"></i> Categorias</label>
+                    <div class="flex flex-wrap gap-2" id="up-categories"></div>
+                </div>
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-xs text-gray-700 dark:text-gray-300 space-y-2">
+                    <p class="font-bold text-red-600 dark:text-red-400 flex items-center gap-1"><i class="fas fa-exclamation-triangle"></i> Regras de publicação</p>
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>Não é permitido conteúdo adulto real (apenas animação, mangá, hentai, etc.).</li>
+                        <li>Proibido postar cenas de gore explícito ou violência gratuita.</li>
+                        <li>Respeite os direitos autorais e a comunidade.</li>
+                    </ul>
+                    <label class="flex items-start gap-2 cursor-pointer mt-2">
+                        <input type="checkbox" id="agree-terms" class="mt-0.5 w-4 h-4 accent-yt-brand">
+                        <span class="font-medium">Li e concordo com as regras de upload</span>
+                    </label>
+                </div>
+            </div>
+            <div class="p-4 sm:p-5 bg-white dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-end gap-2 sm:gap-3 sticky bottom-0">
+                <button onclick="toggleUploadModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition active:scale-95">Cancelar</button>
+                <button onclick="handleUpload()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 flex items-center gap-1.5 text-xs sm:text-sm"><i class="fas fa-upload"></i> Publicar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-edit-video" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="fixed inset-0 modal-overlay" onclick="toggleEditModal(false)"></div>
+        <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
+            <div class="p-4 sm:p-6 border-b border-yt-lightBorder dark:border-yt-darkBorder flex justify-between items-center bg-white dark:bg-yt-dark sticky top-0">
+                <h2 class="text-lg sm:text-xl font-bold"><i class="fas fa-edit text-yt-brand"></i> Editar vídeo</h2>
+                <button onclick="toggleEditModal(false)" class="p-2 hover:bg-gray-200 dark:hover:bg-yt-darkHover rounded-full transition active:scale-90"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5 bg-gray-50 dark:bg-[#1a1a1a]">
+                <input type="hidden" id="edit-video-id">
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Título</label>
+                    <input type="text" id="edit-title" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Descrição</label>
+                    <textarea id="edit-desc" rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">Categorias</label>
+                    <div class="flex flex-wrap gap-2" id="edit-categories"></div>
+                </div>
+            </div>
+            <div class="p-4 sm:p-5 bg-white dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-between sticky bottom-0">
+                <button onclick="deleteVideo()" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm bg-red-500 text-white hover:bg-red-600 transition active:scale-95"><i class="fas fa-trash"></i> Excluir</button>
+                <div class="flex gap-2 sm:gap-3">
+                    <button onclick="toggleEditModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition active:scale-95">Cancelar</button>
+                    <button onclick="saveEditVideo()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 text-xs sm:text-sm"><i class="fas fa-save"></i> Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-report" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="fixed inset-0 modal-overlay" onclick="toggleReportModal(false)"></div>
+        <div class="bg-white dark:bg-yt-dark w-full sm:max-w-md sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder rounded-t-2xl sm:rounded-2xl">
+            <div class="p-4 sm:p-6 border-b border-yt-lightBorder dark:border-yt-darkBorder flex justify-between items-center bg-white dark:bg-yt-dark">
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2"><i class="fas fa-flag text-red-500"></i> Denunciar vídeo</h2>
+                <button onclick="toggleReportModal(false)" class="p-2 hover:bg-gray-200 dark:hover:bg-yt-darkHover rounded-full transition"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-4 sm:p-6 space-y-3">
+                <p class="text-sm text-gray-500">Selecione o motivo da denúncia:</p>
+                <select id="report-reason" class="w-full auth-input">
+                    <option value="">Selecione um motivo...</option>
+                    <option value="Conteúdo impróprio">Conteúdo impróprio</option>
+                    <option value="Violência">Violência</option>
+                    <option value="Discurso de ódio">Discurso de ódio</option>
+                    <option value="Spam">Spam</option>
+                    <option value="Direitos autorais">Direitos autorais</option>
+                    <option value="Outro">Outro</option>
+                </select>
+                <textarea id="report-details" placeholder="Descreva o problema (opcional)" rows="3" class="w-full auth-input resize-none"></textarea>
+            </div>
+            <div class="p-4 sm:p-5 bg-gray-50 dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-end gap-2 sm:gap-3">
+                <button onclick="toggleReportModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition">Cancelar</button>
+                <button onclick="submitReport()" class="bg-red-500 text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:bg-red-600 transition active:scale-95 text-xs sm:text-sm"><i class="fas fa-paper-plane"></i> Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Perfil (aberto pelo avatar) -->
+    <div id="modal-edit-profile" class="fixed inset-0 z-[101] hidden flex items-center justify-center p-4">
+        <div class="fixed inset-0 bg-black/70" onclick="closeEditProfileModal()"></div>
+        <div class="bg-white dark:bg-yt-dark w-full max-w-md rounded-2xl p-6 shadow-2xl z-10 space-y-4">
+            <h3 class="text-lg font-bold">Editar Perfil</h3>
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">Nome de exibição</label>
+                <input type="text" id="edit-profile-name" class="auth-input" value="">
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">URL da Foto de Perfil</label>
+                <input type="text" id="edit-profile-photo" class="auth-input" value="" placeholder="https://...">
+            </div>
+            <div>
+                <label class="text-xs font-bold uppercase text-gray-500">Bio</label>
+                <textarea id="edit-profile-bio" class="auth-input" rows="2"></textarea>
+            </div>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeEditProfileModal()" class="px-4 py-2 rounded-full font-bold text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition">Cancelar</button>
+                <button onclick="saveProfile()" class="bg-yt-brand text-white px-6 py-2 rounded-full font-bold text-sm">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-20 sm:bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 text-white px-4 sm:px-6 py-3 sm:py-3.5 rounded-full shadow-2xl z-[60] flex items-center gap-2 sm:gap-3 transition-all duration-400 opacity-0 translate-y-10 pointer-events-none border border-white/10 backdrop-blur-md">
+        <i id="toast-icon" class="fas fa-check-circle text-green-400 text-sm sm:text-base"></i>
+        <span id="toast-msg" class="text-xs sm:text-sm font-semibold whitespace-nowrap"></span>
+    </div>
+
+    <script>
+        // Estado global
+        let state = {
+            theme: 'dark',
+            selectedCategory: 'all',
+            sidebarOpen: false,
+            currentSearch: '',
+            isPlaying: false,
+            currentSpeed: 1,
+            playerInterval: null,
+            currentUser: null,
+            currentVideoId: null,
+            currentVideoData: null,
+            allVideos: [],
+            following: [],
+            likedVideos: [],
+            dislikedVideos: [],
+            userProfile: null,
+            categories: [
+                { id: 'anime', name: 'Anime', icon: 'fas fa-dragon' },
+                { id: 'amv', name: 'AMV', icon: 'fas fa-music' },
+                { id: 'tutorial', name: 'Tutoriais', icon: 'fas fa-graduation-cap' },
+                { id: 'review', name: 'Reviews', icon: 'fas fa-star' },
+                { id: 'live', name: 'Lives', icon: 'fas fa-broadcast-tower' },
+                { id: 'news', name: 'Notícias', icon: 'fas fa-newspaper' },
+                { id: 'mais18', name: '+18 Animes', icon: 'fas fa-exclamation-triangle' }
+            ]
+        };
+
+        // =============================================
+        // INICIALIZAÇÃO
+        // =============================================
+        async function init() {
+            silenceVideoAbortErrors();
+            setupTheme();
+            setupAuthListener();
+            renderCategories();
+            await loadVideos();
+            setupPlayerListeners();
+        }
+
+        function silenceVideoAbortErrors() {
+            document.addEventListener('error', function(e) {
+                if (e.target && e.target.tagName === 'VIDEO' && e.target.error && e.target.error.code === 20) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+        }
+
+        function setupTheme() {
+    state.theme = 'dark';
+    applyTheme();
+}
+
+function applyTheme() {
+    const html = document.documentElement;
+    // Garante que a classe 'dark' esteja sempre presente
+    html.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+    // (opcional) atualizar ícones, se ainda existirem botões
+}
+
+function toggleTheme() {
+    // Não faz nada, ou mostra um aviso
+    showToast('Tema fixo em modo escuro.', 'info');
+}
+
+function setupExpandableDescription(element, maxHeight = 80) {
+    if (!element) return;
+    
+    // Remove qualquer botão anterior
+    const oldBtn = element.parentElement.querySelector('.expand-desc-btn');
+    if (oldBtn) oldBtn.remove();
+    
+    // Reseta estilos
+    element.style.maxHeight = 'none';
+    element.style.overflow = 'visible';
+    element.classList.remove('relative');
+    
+    // Verifica se o texto é maior que a altura máxima
+    if (element.scrollHeight <= maxHeight) return;
+    
+    // Cria o botão de expandir
+    const btn = document.createElement('button');
+    btn.className = 'expand-desc-btn text-yt-brand font-bold text-xs mt-1 hover:underline';
+    btn.innerText = 'Mostrar mais';
+    
+    // Define o estado inicial (recolhido)
+    let isExpanded = false;
+    element.style.maxHeight = maxHeight + 'px';
+    element.style.overflow = 'hidden';
+    element.style.position = 'relative';
+    
+    // Adiciona uma máscara de gradiente (opcional, para estética)
+    const mask = document.createElement('div');
+    mask.className = 'desc-mask';
+    mask.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 40px;
+        background: linear-gradient(transparent, var(--mask-bg, #f3f4f6));
+        pointer-events: none;
+    `;
+    // Ajusta cor de fundo conforme tema (dark/light)
+    if (document.documentElement.classList.contains('dark')) {
+        mask.style.setProperty('--mask-bg', '#272727');
+    } else {
+        mask.style.setProperty('--mask-bg', '#f3f4f6');
+    }
+    element.appendChild(mask);
+    
+    // Insere o botão após o elemento
+    element.parentElement.appendChild(btn);
+    
+    // Evento de clique
+    btn.addEventListener('click', () => {
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+            element.style.maxHeight = element.scrollHeight + 'px';
+            element.style.overflow = 'visible';
+            btn.innerText = 'Mostrar menos';
+            if (mask) mask.style.display = 'none';
+        } else {
+            element.style.maxHeight = maxHeight + 'px';
+            element.style.overflow = 'hidden';
+            btn.innerText = 'Mostrar mais';
+            if (mask) mask.style.display = 'block';
+        }
+    });
+}
+
+
+        // =============================================
+        // AUTENTICAÇÃO
+        // =============================================
+        function setupAuthListener() {
+            onAuthStateChanged(window.auth, async (user) => {
+                state.currentUser = user;
+                if (user) {
+                    await loadUserProfile();
+                    await loadFollowing();
+                    await loadLikesAndDislikes();
+                } else {
+                    state.userProfile = null;
+                    state.following = [];
+                    state.likedVideos = [];
+                    state.dislikedVideos = [];
+                }
+                updateAuthUI();
+                if (document.getElementById('page-profile').classList.contains('active')) renderProfile();
+                if (document.getElementById('page-auth').classList.contains('active')) renderAuthPage();
+            });
+        }
+
+        async function loadUserProfile() {
+            if (!state.currentUser) return;
+            try {
+                const { getDoc, doc } = window.firestoreHelpers;
+                const snap = await getDoc(doc(window.db, 'users', state.currentUser.uid));
+                if (snap.exists()) {
+                    state.userProfile = snap.data();
+                } else {
+                    state.userProfile = {
+                        displayName: state.currentUser.displayName || '',
+                        photoURL: state.currentUser.photoURL || '',
+                        bio: '',
+                        createdAt: new Date()
+                    };
+                    await window.firestoreHelpers.setDoc(doc(window.db, 'users', state.currentUser.uid), state.userProfile);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar perfil:', e);
+                state.userProfile = {
+                    displayName: state.currentUser.displayName || '',
+                    photoURL: state.currentUser.photoURL || '',
+                    bio: '',
+                    createdAt: new Date()
+                };
+            }
+        }
+
+        async function loadFollowing() {
+            if (!state.currentUser) return;
+            try {
+                const q = window.firestoreHelpers.query(
+                    window.firestoreHelpers.collection(window.db, 'follows'),
+                    window.firestoreHelpers.where('followerId', '==', state.currentUser.uid)
+                );
+                const snap = await window.firestoreHelpers.getDocs(q);
+                state.following = snap.docs.map(d => d.data().followedId);
+            } catch (e) {
+                state.following = [];
+            }
+            updateFollowButton();
+        }
+
+        async function loadLikesAndDislikes() {
+            if (!state.currentUser) return;
+            try {
+                const { getDoc, doc } = window.firestoreHelpers;
+                const snap = await getDoc(doc(window.db, 'users', state.currentUser.uid));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    state.likedVideos = data.likedVideos || [];
+                    state.dislikedVideos = data.dislikedVideos || [];
+                }
+            } catch (e) {
+                state.likedVideos = [];
+                state.dislikedVideos = [];
+            }
+        }
+
+        function updateAuthUI() {
+            const sidebarSection = document.getElementById('sidebar-auth-section');
+            const avatar = document.getElementById('user-avatar');
+            if (state.currentUser) {
+                const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
+                avatar.innerHTML = photo 
+                    ? `<img src="${photo}" class="w-full h-full rounded-full object-cover">`
+                    : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
+                sidebarSection.innerHTML = `
+                    <div class="px-6 py-2 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-yt-brand flex items-center justify-center text-white font-bold overflow-hidden">
+                            ${photo ? `<img src="${photo}" class="w-full h-full object-cover">` : (state.currentUser.displayName ? state.currentUser.displayName[0] : 'U')}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold truncate">${state.userProfile?.displayName || state.currentUser.displayName || 'Usuário'}</p>
+                            <button onclick="handleLogout()" class="text-[10px] text-yt-brand hover:underline font-bold uppercase tracking-wider">Sair da conta</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                avatar.innerHTML = '<i class="fas fa-user"></i>';
+                sidebarSection.innerHTML = `
+                    <div class="px-4 py-3">
+                        <p class="text-xs text-gray-500 mb-3 px-2 leading-relaxed">Faça login para curtir vídeos, comentar e se inscrever.</p>
+                        <button onclick="navigateTo('auth')" class="w-full flex items-center justify-center gap-2 border border-yt-lightBorder dark:border-yt-darkBorder py-2.5 rounded-full text-yt-brand font-bold hover:bg-orange-500/10 transition active:scale-95 text-sm">
+                            <i class="fas fa-user-circle"></i> Fazer login
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function handleAvatarClick() {
+            if (!state.currentUser) {
+                navigateTo('auth');
+                return;
+            }
+            // Abre modal de edição de perfil
+            openEditProfileModal();
+        }
+
+        function renderAuthPage(isRegister = false) {
+            const content = document.getElementById('auth-content');
+            if (isRegister) {
+                content.innerHTML = `
+                    <div class="text-center mb-8">
+                        <i class="fas fa-user-plus text-4xl text-yt-brand mb-4"></i>
+                        <h2 class="text-2xl font-black">Crie sua conta</h2>
+                        <p class="text-gray-500 text-sm mt-1">Junte-se à maior comunidade de streaming!</p>
+                    </div>
+                    <div class="space-y-4">
+                        <button onclick="handleGoogleLogin()" class="google-btn w-full flex items-center justify-center gap-3 py-3 rounded-xl font-bold text-sm">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                            Continuar com Google
+                        </button>
+                        <div class="flex items-center gap-4 my-6"><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div><span class="text-xs text-gray-400 font-bold uppercase">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div></div>
+                        <div class="space-y-3">
+                            <div class="relative"><i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" id="reg-name" placeholder="Como quer ser chamado?" class="auth-input pl-11"></div>
+                            <div class="relative"><i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="email" id="reg-email" placeholder="Seu melhor e-mail" class="auth-input pl-11"></div>
+                            <div class="relative"><i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="password" id="reg-pass" placeholder="Crie uma senha forte" class="auth-input pl-11"></div>
+                        </div>
+                        <button onclick="handleRegister()" class="w-full bg-yt-brand text-white py-3.5 rounded-xl font-black text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-orange-500/20 mt-2">CRIAR MINHA CONTA</button>
+                        <p class="text-center text-xs text-gray-500 mt-6">Já tem uma conta? <button onclick="renderAuthPage(false)" class="text-yt-brand font-bold hover:underline">Faça login agora</button></p>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center mb-8">
+                        <i class="fas fa-play-circle text-5xl text-yt-brand mb-4"></i>
+                        <h2 class="text-2xl font-black">Bem-vindo de volta!</h2>
+                        <p class="text-gray-500 text-sm mt-1">Sentimos sua falta no AnimeStream.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <button onclick="handleGoogleLogin()" class="google-btn w-full flex items-center justify-center gap-3 py-3 rounded-xl font-bold text-sm">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Entrar com Google
+                        </button>
+                        <div class="flex items-center gap-4 my-6"><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div><span class="text-xs text-gray-400 font-bold uppercase">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div></div>
+                        <div class="space-y-3">
+                            <div class="relative"><i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="email" id="login-email" placeholder="E-mail" class="auth-input pl-11"></div>
+                            <div class="relative"><i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="password" id="login-pass" placeholder="Senha" class="auth-input pl-11"></div>
+                        </div>
+                        <button onclick="handleLogin()" class="w-full bg-yt-brand text-white py-3.5 rounded-xl font-black text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-orange-500/20 mt-2">ACESSAR CONTA</button>
+                        <div class="flex flex-col items-center gap-4 mt-6">
+                            <button onclick="showToast('Em desenvolvimento', 'info')" class="text-xs text-gray-400 hover:text-yt-brand transition">Esqueceu sua senha?</button>
+                            <p class="text-xs text-gray-500">Não é membro ainda? <button onclick="renderAuthPage(true)" class="text-yt-brand font-bold hover:underline">Cadastre-se grátis</button></p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function handleGoogleLogin() {
+            try {
+                const provider = new window.GoogleAuthProvider();
+                const result = await window.signInWithPopup(window.auth, provider);
+                showToast(`Bem-vindo, ${result.user.displayName}!`);
+                navigateTo('home');
+            } catch (error) {
+                console.error(error);
+                if (error.code === 'auth/popup-closed-by-user') {
+                    showToast('Login cancelado.', 'info');
+                } else {
+                    showToast('Falha no login com Google.', 'error');
+                }
+            }
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pass = document.getElementById('reg-pass').value;
+            if (!name || !email || !pass) return showToast('Preencha todos os campos.', 'error');
+            try {
+                const cred = await createUserWithEmailAndPassword(window.auth, email, pass);
+                await updateProfile(cred.user, { displayName: name });
+                showToast('Conta criada com sucesso!');
+                navigateTo('home');
+            } catch (error) {
+                const msg = error.code === 'auth/email-already-in-use' ? 'Este email já está cadastrado.' : error.message;
+                showToast('Erro: ' + msg, 'error');
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-pass').value;
+            if (!email || !pass) return showToast('Preencha todos os campos.', 'error');
+            try {
+                await signInWithEmailAndPassword(window.auth, email, pass);
+                showToast('Login realizado!');
+                navigateTo('home');
+            } catch (error) {
+                showToast('E-mail ou senha incorretos.', 'error');
+            }
+        }
+
+        async function handleLogout() {
+            await signOut(window.auth);
+            showToast('Você saiu da conta.', 'info');
+            navigateTo('home');
+        }
+
+        // =============================================
+        // PERFIL
+        // =============================================
+        async function renderProfile() {
+            if (!state.currentUser) { navigateTo('auth'); return; }
+            if (!state.userProfile) await loadUserProfile();
+            const container = document.getElementById('profile-content');
+            const p = state.userProfile || {};
+            const myVideos = state.allVideos.filter(v => v.uploaderId === state.currentUser.uid);
+            container.innerHTML = `
+                <div class="bg-white dark:bg-yt-darkHover rounded-2xl p-6 shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0">
+                            ${p.photoURL ? `<img src="${p.photoURL}" class="w-full h-full object-cover">` : (p.displayName ? p.displayName[0].toUpperCase() : 'U')}
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">${p.displayName || 'Usuário'}</h2>
+                            <p class="text-sm text-gray-500">${p.bio || 'Nenhuma bio ainda.'}</p>
+                            <p class="text-xs text-gray-400 mt-1">${myVideos.length} vídeos publicados</p>
+                        </div>
+                        <button onclick="openEditProfileModal()" class="ml-auto bg-gray-200 dark:bg-yt-darkHover px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition"><i class="fas fa-edit mr-1"></i> Editar Perfil</button>
+                    </div>
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-video text-yt-brand"></i> Meus Vídeos</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="my-videos-grid">
+                        ${myVideos.length === 0 ? '<p class="text-gray-500 col-span-full py-4 text-center">Você ainda não publicou nenhum vídeo.</p>' : myVideos.map(v => `
+                            <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
+                                <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
+                                    <video class="video-thumbnail" src="${v.url}#t=1"></video>
+                                </div>
+                                <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                                <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openEditProfileModal() {
+            const p = state.userProfile || {};
+            document.getElementById('edit-profile-name').value = p.displayName || '';
+            document.getElementById('edit-profile-photo').value = p.photoURL || '';
+            document.getElementById('edit-profile-bio').value = p.bio || '';
+            document.getElementById('modal-edit-profile').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('modal-edit-profile').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('edit-profile-name').value.trim();
+            const photo = document.getElementById('edit-profile-photo').value.trim();
+            const bio = document.getElementById('edit-profile-bio').value.trim();
+            if (!name) return showToast('Nome é obrigatório.', 'error');
+
+            // Verificar unicidade do nome
+            try {
+                const { getDocs, query, collection, where, doc, updateDoc } = window.firestoreHelpers;
+                const q = query(collection(window.db, 'users'), where('displayName', '==', name));
+                const snap = await getDocs(q);
+                const existsAnother = snap.docs.some(d => d.id !== state.currentUser.uid);
+                if (existsAnother) return showToast('Este nome já está em uso por outro canal.', 'error');
+
+                await updateDoc(doc(window.db, 'users', state.currentUser.uid), {
+                    displayName: name,
+                    photoURL: photo,
+                    bio: bio
+                });
+                await updateProfile(state.currentUser, { displayName: name, photoURL: photo });
+                state.userProfile.displayName = name;
+                state.userProfile.photoURL = photo;
+                state.userProfile.bio = bio;
+                updateAuthUI();
+                if (document.getElementById('page-profile').classList.contains('active')) renderProfile();
+                closeEditProfileModal();
+                showToast('Perfil atualizado!');
+            } catch (e) {
+                showToast('Erro ao salvar perfil.', 'error');
+            }
+        }
+
+        // =============================================
+        // NAVEGAÇÃO SPA
+        // =============================================
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const pageEl = document.getElementById(`page-${pageId}`);
+            if (pageEl) pageEl.classList.add('active');
+            window.scrollTo(0, 0);
+
+            if (pageId !== 'player') {
+                const player = document.getElementById('html-player');
+                if (player) {
+                    player.pause();
+                    state.isPlaying = false;
+                    updatePlayButton();
+                }
+            }
+
+            if (pageId === 'auth') renderAuthPage();
+            if (pageId === 'profile') renderProfile();
+            if (pageId === 'trending') renderTrending();
+
+            window.location.hash = pageId === 'player' ? `player/${state.currentVideoId}` : pageId;
+        }
+
+        // =============================================
+        // CATEGORIAS
+        // =============================================
+        function renderCategories() {
+            const sidebar = document.getElementById('sidebar-categories');
+            const chips = document.getElementById('category-chips');
+            const uploadCats = document.getElementById('up-categories');
+            const editCats = document.getElementById('edit-categories');
+
+            const allChips = `<button onclick="filterCategory('all')" class="chip px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-yt-darkHover hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition whitespace-nowrap text-xs sm:text-sm font-medium ${state.selectedCategory === 'all' ? 'bg-yt-brand text-white dark:bg-yt-brand' : ''}">Tudo</button>` + 
+                state.categories.map(cat => `
+                <button onclick="filterCategory('${cat.id}')" class="chip px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-yt-darkHover hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition whitespace-nowrap text-xs sm:text-sm font-medium ${state.selectedCategory === cat.id ? 'bg-yt-brand text-white dark:bg-yt-brand' : ''}">${cat.name}</button>
+            `).join('');
+            
+            if (chips) chips.innerHTML = allChips;
+            if (sidebar) {
+                sidebar.innerHTML = state.categories.map(cat => `
+                    <a href="#" onclick="filterCategory('${cat.id}'); toggleSidebar()" class="flex items-center px-6 py-3 hover:bg-yt-lightHover dark:hover:bg-yt-darkHover gap-4 rounded-lg mx-2 transition text-sm">
+                        <i class="${cat.icon} w-6 text-center"></i>
+                        <span class="font-medium">${cat.name}</span>
+                    </a>
+                `).join('');
+            }
+
+            const catInputs = state.categories.map(cat => `
+                <div class="relative">
+                    <input type="checkbox" id="cat-${cat.id}" value="${cat.id}" class="category-checkbox hidden">
+                    <label for="cat-${cat.id}" class="px-4 py-2 rounded-full border border-yt-lightBorder dark:border-yt-darkBorder text-xs font-bold cursor-pointer hover:border-yt-brand transition block">${cat.name}</label>
+                </div>
+            `).join('');
+
+            if (uploadCats) uploadCats.innerHTML = catInputs;
+            if (editCats) editCats.innerHTML = catInputs.replace(/cat-/g, 'edit-cat-');
+        }
+
+        function filterCategory(catId) {
+            state.selectedCategory = catId;
+            renderCategories();
+            renderVideoGrid();
+            navigateTo('home');
+        }
+
+        // =============================================
+        // VÍDEOS
+        // =============================================
+        async function loadVideos() {
+            try {
+                const q = window.firestoreHelpers.query(
+                    window.firestoreHelpers.collection(window.db, 'videos'),
+                    window.firestoreHelpers.orderBy('createdAt', 'desc')
+                );
+                const snapshot = await window.firestoreHelpers.getDocs(q);
+                state.allVideos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error('Erro ao carregar vídeos:', error);
+                state.allVideos = [];
+            }
+            renderVideoGrid();
+            // Atualiza durações nos cards
+            updateAllDurations();
+        }
+
+        function renderVideoGrid() {
+            const grid = document.getElementById('video-grid');
+            const noResults = document.getElementById('no-results');
+            if (!grid) return;
+            
+            let filtered = state.allVideos;
+            if (state.selectedCategory !== 'all') {
+                filtered = filtered.filter(v => v.categories && v.categories.includes(state.selectedCategory));
+            }
+            if (state.currentSearch) {
+                const s = state.currentSearch.toLowerCase();
+                filtered = filtered.filter(v => v.title.toLowerCase().includes(s) || (v.description && v.description.toLowerCase().includes(s)));
+            }
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                if (noResults) noResults.classList.remove('hidden');
+                return;
+            }
+
+            if (noResults) noResults.classList.add('hidden');
+            grid.innerHTML = filtered.map(v => {
+                const uploaderPhoto = v.uploaderPhotoURL || '';
+                const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
+                return `
+                <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
+                
+                    <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-all duration-300">
+                        <video class="video-thumbnail" src="${v.url}#t=1" preload="metadata"></video>
+                        
+                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl drop-shadow-lg"></i>
+                        </div>
+                        <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded" id="duration-${v.id}">
+                            <i class="fas fa-clock mr-1"></i>
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
+                            ${uploaderPhoto ? `<img src="${uploaderPhoto}" class="w-full h-full object-cover">` : initial}
+                        </div>
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-yt-brand transition-colors mb-1">${v.title}</h3>
+                            <p class="text-xs text-gray-500 font-medium truncate">${v.uploaderName || 'Uploader'}</p>
+                            <p class="text-[11px] text-gray-400 mt-0.5">${v.views || 0} visualizações • ${formatDate(v.createdAt)}</p>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            // Atualiza as durações dos cards recém-renderizados
+            requestAnimationFrame(() => {
+                updateAllDurations();
+            });
+        }
+
+        function updateAllDurations() {
+            state.allVideos.forEach(v => {
+                const el = document.getElementById(`duration-${v.id}`);
+                if (el) {
+                    const tempVideo = document.createElement('video');
+                    tempVideo.preload = 'metadata';
+                    tempVideo.src = v.url;
+                    tempVideo.addEventListener('loadedmetadata', function() {
+                        if (tempVideo.duration && isFinite(tempVideo.duration)) {
+                            el.textContent = formatTime(tempVideo.duration);
+                        } else {
+                            el.textContent = '';
+                        }
+                    });
+                    tempVideo.addEventListener('error', () => { el.textContent = ''; });
+                }
+            });
+        }
+
+        function renderTrending() {
+            const grid = document.getElementById('trending-grid');
+            if (!grid) return;
+            const sorted = [...state.allVideos].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 20);
+            grid.innerHTML = sorted.length === 0 
+                ? '<p class="text-gray-500 col-span-full text-center py-8">Nenhum vídeo em alta.</p>'
+                : sorted.map(v => `
+                    <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
+                        <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
+                            <video class="video-thumbnail" src="${v.url}#t=1"></video>
+                        </div>
+                        <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                        <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
+                    </div>
+                `).join('');
+        }
+
+        async function openVideo(id) {
+            state.currentVideoId = id;
+            const video = state.allVideos.find(v => v.id === id);
+            if (!video) return;
+            state.currentVideoData = video;
+            navigateTo('player');
+
+            const player = document.getElementById('html-player');
+            if (player) {
+                player.src = video.url;
+                document.getElementById('player-title').innerText = video.title;
+                document.getElementById('player-desc').innerText = video.description || 'Sem descrição.';
+                document.getElementById('player-uploader-name').innerText = video.uploaderName || 'Uploader';
+                document.getElementById('likes-count').innerText = video.likes || 0;
+                document.getElementById('dislikes-count').innerText = video.dislikes || 0;
+                // Avatar do uploader
+                const avatarEl = document.getElementById('player-uploader-avatar');
+                if (video.uploaderPhotoURL) {
+                    avatarEl.innerHTML = `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover">`;
+                } else {
+                    avatarEl.innerHTML = video.uploaderName ? video.uploaderName[0].toUpperCase() : 'U';
+                }
+
+                try {
+                    await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), {
+                        views: window.firestoreHelpers.increment(1)
+                    });
+                } catch(e) {}
+
+                updatePlayerUI();
+                loadRecommended();
+                renderEditButtons();
+                updateFollowButton();
+                updateLikeButton();
+                updateDislikeButton();
+
+                player.play().catch(() => {});
+                state.isPlaying = true;
+                updatePlayButton();
+            }
+        }
+
+        function updatePlayerUI() {
+            const likesCount = document.getElementById('likes-count');
+            const dislikesCount = document.getElementById('dislikes-count');
+            if (likesCount && state.currentVideoData) {
+                likesCount.innerText = state.currentVideoData.likes || 0;
+            }
+            if (dislikesCount && state.currentVideoData) {
+                dislikesCount.innerText = state.currentVideoData.dislikes || 0;
+            }
+        }
+
+        function loadRecommended() {
+            const list = document.getElementById('recommended-list');
+            if (!list) return;
+            const recs = state.allVideos.filter(v => v.id !== state.currentVideoId).slice(0, 10);
+            list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => `
+                <div class="flex gap-3 mb-4 cursor-pointer group" onclick="openVideo('${v.id}')">
+                    <div class="w-40 aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden flex-shrink-0 relative">
+                        <video class="video-thumbnail" src="${v.url}#t=1" preload="metadata"></video>
+                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}"></div>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                        <p class="text-[11px] text-gray-500 mt-1">${v.uploaderName || 'Uploader'}</p>
+                        <p class="text-[10px] text-gray-400">${v.views || 0} visualizações</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Atualiza durações dos recomendados
+            requestAnimationFrame(() => {
+                recs.forEach(v => {
+                    const el = document.getElementById(`rec-duration-${v.id}`);
+                    if (el) {
+                        const tempVideo = document.createElement('video');
+                        tempVideo.preload = 'metadata';
+                        tempVideo.src = v.url;
+                        tempVideo.addEventListener('loadedmetadata', function() {
+                            if (tempVideo.duration && isFinite(tempVideo.duration)) {
+                                el.textContent = formatTime(tempVideo.duration);
+                            } else {
+                                el.textContent = '';
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function renderEditButtons() {
+            const container = document.getElementById('player-edit-buttons');
+            if (!container) return;
+            if (state.currentUser && state.currentVideoData && state.currentVideoData.uploaderId === state.currentUser.uid) {
+                container.innerHTML = `<button onclick="toggleEditModal(true)" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-yt-darkHover transition"><i class="fas fa-edit"></i></button>`;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function toggleEditModal(show) {
+            const modal = document.getElementById('modal-edit-video');
+            if (!modal) return;
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                document.getElementById('edit-video-id').value = state.currentVideoId;
+                document.getElementById('edit-title').value = state.currentVideoData.title;
+                document.getElementById('edit-desc').value = state.currentVideoData.description || '';
+                document.querySelectorAll('[id^="edit-cat-"]').forEach(c => {
+                    c.checked = state.currentVideoData.categories.includes(c.value);
+                });
+            }
+        }
+
+        async function saveEditVideo() {
+            const id = document.getElementById('edit-video-id').value;
+            const title = document.getElementById('edit-title').value;
+            const desc = document.getElementById('edit-desc').value;
+            const cats = Array.from(document.querySelectorAll('[id^="edit-cat-"]:checked')).map(c => c.value);
+            try {
+                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), { title, description: desc, categories: cats });
+                showToast('Alterações salvas!');
+                toggleEditModal(false);
+                await loadVideos();
+                openVideo(id);
+            } catch (e) { showToast('Erro ao salvar', 'error'); }
+        }
+
+        async function deleteVideo() {
+            if (!confirm('Deseja realmente excluir este vídeo permanentemente?')) return;
+            try {
+                await window.firestoreHelpers.deleteDoc(window.firestoreHelpers.doc(window.db, 'videos', state.currentVideoId));
+                showToast('Vídeo excluído');
+                toggleEditModal(false);
+                await loadVideos();
+                navigateTo('home');
+            } catch (e) { showToast('Erro ao excluir', 'error'); }
+        }
+
+        // =============================================
+        // UPLOAD
+        // =============================================
+        function toggleUploadModal(show) {
+            if (show && !state.currentUser) return navigateTo('auth');
+            const modal = document.getElementById('modal-upload');
+            if (!modal) return;
+            modal.classList.toggle('hidden', !show);
+            if (show) {
+                document.getElementById('up-url').value = '';
+                document.getElementById('up-title').value = '';
+                document.getElementById('up-desc').value = '';
+                document.querySelectorAll('.category-checkbox').forEach(c => c.checked = false);
+                document.getElementById('thumbnail-preview').innerHTML = '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
+                const agreeTerms = document.getElementById('agree-terms');
+                if (agreeTerms) agreeTerms.checked = false;
+            }
+        }
+
+        function previewThumbnail(url) {
+            const preview = document.getElementById('thumbnail-preview');
+            if (!preview) return;
+            if (url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov'))) {
+                preview.innerHTML = `<video class="w-full h-full object-cover" src="${url}#t=1"></video>`;
+            }
+        }
+
+        async function handleUpload() {
+            const agreeTerms = document.getElementById('agree-terms');
+            if (agreeTerms && !agreeTerms.checked) return showToast('Você deve concordar com as regras de upload.', 'error');
+            
+            const url = document.getElementById('up-url').value;
+            const title = document.getElementById('up-title').value;
+            const desc = document.getElementById('up-desc').value;
+            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+
+            if (!url || !title || selectedCats.length === 0) return showToast('Preencha os campos obrigatórios', 'error');
+
+            try {
+                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), {
+                    url, title, description: desc,
+                    categories: selectedCats,
+                    uploaderId: state.currentUser.uid,
+                    uploaderName: state.userProfile?.displayName || state.currentUser.displayName,
+                    uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+                    views: 0, likes: 0, dislikes: 0, likedBy: [], dislikedBy: [],
+                    createdAt: window.firestoreHelpers.serverTimestamp()
+                });
+                showToast('Vídeo publicado!');
+                toggleUploadModal(false);
+                await loadVideos();
+            } catch (e) { showToast('Erro ao publicar: ' + e.message, 'error'); }
+        }
+
+        // =============================================
+        // INTERAÇÕES (LIKE, DISLIKE, FOLLOW)
+        // =============================================
+        async function toggleLike() {
+            if (!state.currentUser) return navigateTo('auth');
+            const id = state.currentVideoId;
+            const vidRef = window.firestoreHelpers.doc(window.db, 'videos', id);
+            const userRef = window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid);
+
+            // Se já deu dislike, remove o dislike primeiro
+            if (state.dislikedVideos.includes(id)) {
+                await window.firestoreHelpers.updateDoc(vidRef, {
+                    dislikes: window.firestoreHelpers.increment(-1),
+                    dislikedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
+                });
+                await window.firestoreHelpers.updateDoc(userRef, {
+                    dislikedVideos: window.firestoreHelpers.arrayRemove(id)
+                });
+                state.dislikedVideos = state.dislikedVideos.filter(v => v !== id);
+            }
+
+            const isLiked = state.likedVideos.includes(id);
+            try {
+                if (isLiked) {
+                    await window.firestoreHelpers.updateDoc(vidRef, {
+                        likes: window.firestoreHelpers.increment(-1),
+                        likedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
+                    });
+                    await window.firestoreHelpers.updateDoc(userRef, {
+                        likedVideos: window.firestoreHelpers.arrayRemove(id)
+                    });
+                    state.likedVideos = state.likedVideos.filter(v => v !== id);
+                } else {
+                    await window.firestoreHelpers.updateDoc(vidRef, {
+                        likes: window.firestoreHelpers.increment(1),
+                        likedBy: window.firestoreHelpers.arrayUnion(state.currentUser.uid)
+                    });
+                    await window.firestoreHelpers.updateDoc(userRef, {
+                        likedVideos: window.firestoreHelpers.arrayUnion(id)
+                    });
+                    state.likedVideos.push(id);
+                }
+                // Recarrega dados do vídeo
+                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
+                state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
+                document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
+                document.getElementById('dislikes-count').innerText = state.currentVideoData.dislikes || 0;
+                updateLikeButton();
+                updateDislikeButton();
+            } catch (e) { console.error(e); }
+        }
+
+        async function toggleDislike() {
+            if (!state.currentUser) return navigateTo('auth');
+            const id = state.currentVideoId;
+            const vidRef = window.firestoreHelpers.doc(window.db, 'videos', id);
+            const userRef = window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid);
+
+            // Se já deu like, remove o like primeiro
+            if (state.likedVideos.includes(id)) {
+                await window.firestoreHelpers.updateDoc(vidRef, {
+                    likes: window.firestoreHelpers.increment(-1),
+                    likedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
+                });
+                await window.firestoreHelpers.updateDoc(userRef, {
+                    likedVideos: window.firestoreHelpers.arrayRemove(id)
+                });
+                state.likedVideos = state.likedVideos.filter(v => v !== id);
+            }
+
+            const isDisliked = state.dislikedVideos.includes(id);
+            try {
+                if (isDisliked) {
+                    await window.firestoreHelpers.updateDoc(vidRef, {
+                        dislikes: window.firestoreHelpers.increment(-1),
+                        dislikedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
+                    });
+                    await window.firestoreHelpers.updateDoc(userRef, {
+                        dislikedVideos: window.firestoreHelpers.arrayRemove(id)
+                    });
+                    state.dislikedVideos = state.dislikedVideos.filter(v => v !== id);
+                } else {
+                    await window.firestoreHelpers.updateDoc(vidRef, {
+                        dislikes: window.firestoreHelpers.increment(1),
+                        dislikedBy: window.firestoreHelpers.arrayUnion(state.currentUser.uid)
+                    });
+                    await window.firestoreHelpers.updateDoc(userRef, {
+                        dislikedVideos: window.firestoreHelpers.arrayUnion(id)
+                    });
+                    state.dislikedVideos.push(id);
+                }
+                // Recarrega dados do vídeo
+                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
+                state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
+                document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
+                document.getElementById('dislikes-count').innerText = state.currentVideoData.dislikes || 0;
+                updateLikeButton();
+                updateDislikeButton();
+            } catch (e) { console.error(e); }
+        }
+
+        function updateLikeButton() {
+            const btn = document.getElementById('btn-like');
+            if (!btn) return;
+            const isLiked = state.likedVideos.includes(state.currentVideoId);
+            btn.classList.toggle('text-yt-brand', isLiked);
+        }
+
+        function updateDislikeButton() {
+            const btn = document.getElementById('btn-dislike');
+            if (!btn) return;
+            const isDisliked = state.dislikedVideos.includes(state.currentVideoId);
+            btn.classList.toggle('text-red-500', isDisliked);
+        }
+
+        async function toggleFollow() {
+            if (!state.currentUser) return navigateTo('auth');
+            const targetId = state.currentVideoData.uploaderId;
+            if (targetId === state.currentUser.uid) return showToast('Você não pode se seguir', 'info');
+
+            const isFollowing = state.following.includes(targetId);
+            const followQ = window.firestoreHelpers.query(
+                window.firestoreHelpers.collection(window.db, 'follows'),
+                window.firestoreHelpers.where('followerId', '==', state.currentUser.uid),
+                window.firestoreHelpers.where('followedId', '==', targetId)
+            );
+            try {
+                if (isFollowing) {
+                    const snap = await window.firestoreHelpers.getDocs(followQ);
+                    snap.forEach(d => window.firestoreHelpers.deleteDoc(d.ref));
+                    state.following = state.following.filter(id => id !== targetId);
+                } else {
+                    await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'follows'), {
+                        followerId: state.currentUser.uid,
+                        followedId: targetId,
+                        createdAt: window.firestoreHelpers.serverTimestamp()
+                    });
+                    state.following.push(targetId);
+                }
+                updateFollowButton();
+                showToast(isFollowing ? 'Inscrição cancelada' : 'Inscrição realizada!');
+            } catch (e) { console.error(e); }
+        }
+
+        function updateFollowButton() {
+            const btn = document.getElementById('btn-follow');
+            const text = document.getElementById('btn-follow-text');
+            if (!btn || !text) return;
+            const isFollowing = state.currentVideoData && state.following.includes(state.currentVideoData.uploaderId);
+            if (isFollowing) {
+                btn.className = "bg-gray-200 dark:bg-yt-darkHover text-gray-500 px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2";
+                text.innerText = "Inscrito";
+            } else {
+                btn.className = "bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-200 transition active:scale-95 flex items-center gap-2";
+                text.innerText = "Inscrever-se";
+            }
+        }
+
+        function shareVideo() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: state.currentVideoData?.title || 'Vídeo', url }).catch(() => {});
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => showToast('Link copiado!'));
+            } else {
+                showToast('Link: ' + url, 'info');
+            }
+        }
+
+        function reportVideo() {
+            const modal = document.getElementById('modal-report');
+            if (modal) modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function toggleReportModal(show) {
+            const modal = document.getElementById('modal-report');
+            if (modal) {
+                modal.classList.toggle('hidden', !show);
+                document.body.style.overflow = show ? 'hidden' : '';
+            }
+        }
+
+        async function submitReport() {
+            const reason = document.getElementById('report-reason').value;
+            const details = document.getElementById('report-details').value;
+            if (!reason) return showToast('Selecione um motivo.', 'error');
+            try {
+                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', state.currentVideoId), {
+                    reports: window.firestoreHelpers.arrayUnion({
+                        userId: state.currentUser.uid,
+                        reason,
+                        details,
+                        createdAt: new Date().toISOString()
+                    })
+                });
+                showToast('Denúncia enviada.');
+                toggleReportModal(false);
+                document.getElementById('report-reason').value = '';
+                document.getElementById('report-details').value = '';
+            } catch (e) { showToast('Erro ao enviar denúncia.', 'error'); }
+        }
+
+        // =============================================
+        // PLAYER MELHORADO
+        // =============================================
+        function setupPlayerListeners() {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            const progress = document.getElementById('progress-bar');
+            const time = document.getElementById('time-display');
+
+            player.ontimeupdate = () => {
+                if (progress && player.duration) {
+                    const perc = (player.currentTime / player.duration) * 100;
+                    progress.style.width = Math.min(perc, 100) + '%';
+                }
+                if (time) {
+                    time.innerText = `${formatTime(player.currentTime)} / ${formatTime(player.duration || 0)}`;
+                }
+            };
+            player.onended = () => { state.isPlaying = false; updatePlayButton(); };
+            player.onloadedmetadata = () => {
+                if (time) time.innerText = `0:00 / ${formatTime(player.duration || 0)}`;
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (document.getElementById('page-player') && document.getElementById('page-player').classList.contains('active')) {
+                    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+                    if (e.code === 'ArrowRight') skipTime(10);
+                    if (e.code === 'ArrowLeft') skipTime(-10);
+                    if (e.code === 'ArrowUp') { e.preventDefault(); changeVolume(Math.min(1, (player.volume || 1) + 0.1)); }
+                    if (e.code === 'ArrowDown') { e.preventDefault(); changeVolume(Math.max(0, (player.volume || 1) - 0.1)); }
+                }
+            });
+        }
+
+        function togglePlay() {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            if (player.paused) { player.play(); state.isPlaying = true; }
+            else { player.pause(); state.isPlaying = false; }
+            updatePlayButton();
+        }
+
+        function updatePlayButton() {
+            const btn = document.getElementById('play-btn');
+            if (!btn) return;
+            btn.innerHTML = state.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        }
+
+        function skipTime(s) {
+            const player = document.getElementById('html-player');
+            if (player) player.currentTime += s;
+        }
+
+        function seekVideo(e) {
+            const player = document.getElementById('html-player');
+            const container = document.getElementById('progress-container');
+            if (!player || !container) return;
+            const rect = container.getBoundingClientRect();
+            const pos = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            player.currentTime = (pos / rect.width) * player.duration;
+        }
+
+        function changeVolume(value) {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            player.volume = value;
+            const slider = document.getElementById('volume-slider');
+            if (slider) slider.value = value;
+            const icon = document.querySelector('#volume-btn i');
+            if (icon) {
+                if (value == 0) icon.className = 'fas fa-volume-mute text-sm';
+                else if (value < 0.5) icon.className = 'fas fa-volume-down text-sm';
+                else icon.className = 'fas fa-volume-up text-sm';
+            }
+        }
+
+        function changePlaybackSpeed() {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            let idx = speeds.indexOf(state.currentSpeed);
+            idx = (idx + 1) % speeds.length;
+            state.currentSpeed = speeds[idx];
+            player.playbackRate = state.currentSpeed;
+            const speedBtn = document.getElementById('speed-btn');
+            if (speedBtn) speedBtn.querySelector('span').innerText = state.currentSpeed + 'x';
+        }
+
+        function togglePiP() {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            if (document.pictureInPictureElement) {
+                document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled) {
+                player.requestPictureInPicture();
+            }
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('player-container');
+            if (container) {
+                if (container.requestFullscreen) container.requestFullscreen();
+                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+            }
+        }
+
+        // =============================================
+        // UTILITÁRIOS
+        // =============================================
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (!sidebar || !overlay) return;
+            state.sidebarOpen = !state.sidebarOpen;
+            sidebar.style.transform = state.sidebarOpen ? 'translateX(0)' : 'translateX(-100%)';
+            overlay.classList.toggle('hidden', !state.sidebarOpen);
+            overlay.style.opacity = state.sidebarOpen ? '1' : '0';
+        }
+
+        function formatTime(s) {
+            if (!isFinite(s) || isNaN(s)) return '0:00';
+            const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+            if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+            return `${m}:${sec.toString().padStart(2, '0')}`;
+        }
+
+        function formatDate(ts) {
+            if (!ts) return 'Agora';
+            const d = ts.toDate ? ts.toDate() : new Date(ts);
+            return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-msg');
+            if (!toast || !msgEl) return;
+            msgEl.innerText = msg;
+            if (type === 'error') icon.className = 'fas fa-exclamation-circle text-red-400';
+            else if (type === 'info') icon.className = 'fas fa-info-circle text-blue-400';
+            else icon.className = 'fas fa-check-circle text-green-400';
+            
+            toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.classList.add('pointer-events-none'), 400);
+            }, 3000);
+        }
+
+        function handleSearchInput(val) {
+            state.currentSearch = val;
+            if (!val) clearSearch();
+        }
+
+        function handleSearch() {
+            if (!state.currentSearch) return;
+            const indicator = document.getElementById('search-indicator');
+            const indicatorText = document.getElementById('search-indicator-text');
+            if (indicator) indicator.classList.remove('hidden');
+            if (indicatorText) indicatorText.innerText = `Resultados para: "${state.currentSearch}"`;
+            renderVideoGrid();
+            navigateTo('home');
+        }
+
+        function clearSearch() {
+            state.currentSearch = '';
+            document.getElementById('search-input').value = '';
+            const indicator = document.getElementById('search-indicator');
+            if (indicator) indicator.classList.add('hidden');
+            renderVideoGrid();
+        }
+
+        // Inicialização
+        window.onload = init;
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '').split('/')[0];
+            if (hash === 'player') {
+                const videoId = window.location.hash.split('/')[1];
+                if (videoId) openVideo(videoId);
+            } else if (hash && document.getElementById(`page-${hash}`)) {
+                navigateTo(hash);
+            }
+        });
+    </script>
+</body>
+</html>
