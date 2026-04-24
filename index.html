@@ -8,17 +8,17 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="https://8upload.com/image/5c8d46ba70e7a43c/704b03e783c4d16b0d750843559e7353.jpg">
-    
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { 
-            getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, increment, getDoc, setDoc 
+        import {
+            getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, increment, getDoc, setDoc
         } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-        import { 
-            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, onAuthStateChanged, GoogleAuthProvider, signInWithPopup 
+        import {
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, onAuthStateChanged, GoogleAuthProvider, signInWithPopup
         } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
-        
+
         const firebaseConfig = {
             apiKey: "AIzaSyDAw0YMvJALs2oD6yVZn1a94vu1PpnClsI",
             authDomain: "vibtube-927d7.firebaseapp.com",
@@ -27,12 +27,12 @@
             messagingSenderId: "81266811806",
             appId: "1:81266811806:web:153feb3c86bd28b8e62c8f"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         window.db = getFirestore(app);
         window.auth = getAuth(app);
         window.storage = getStorage(app);
-        
+
         window.GoogleAuthProvider = GoogleAuthProvider;
         window.signInWithPopup = signInWithPopup;
         window.onAuthStateChanged = onAuthStateChanged;
@@ -40,35 +40,66 @@
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.signOut = signOut;
         window.updateProfile = updateProfile;
-        
+
         window.firestoreHelpers = {
             collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where, orderBy, limit, serverTimestamp, arrayUnion, arrayRemove, increment, getDoc, setDoc
         };
-        
+
         console.log('Firebase inicializado com sucesso (vibtube-927d7)');
     </script>
 
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #6b7280; border-radius: 3px; }
-        
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .hide-scroll::-webkit-scrollbar { display: none; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6b7280;
+            border-radius: 3px;
+        }
 
-        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .slide-up { animation: slideUp 0.3s ease-out; }
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .footer-hidden { display: none !important; }
+        .footer-hidden {
+            display: none !important;
+        }
 
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.85);
@@ -88,6 +119,12 @@
             height: 100%;
             pointer-events: none;
         }
+        .video-thumbnail-img {
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
         .video-player-container {
             position: relative;
@@ -102,11 +139,12 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.95));
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8) 40%, rgba(0, 0, 0, 0.95));
             padding: 40px 12px 12px;
             opacity: 0;
             transition: opacity 0.3s ease;
             pointer-events: none;
+            z-index: 5;
         }
 
         .video-player-container:hover .custom-controls,
@@ -114,18 +152,23 @@
             opacity: 1;
             pointer-events: all;
         }
+        .custom-controls.force-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
 
         .progress-container {
             width: 100%;
             height: 3px;
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 2px;
             cursor: pointer;
             margin-bottom: 8px;
             transition: height 0.2s;
         }
-
-        .progress-container:hover { height: 5px; }
+        .progress-container:hover {
+            height: 5px;
+        }
 
         .progress-bar {
             height: 100%;
@@ -148,8 +191,9 @@
             min-width: 36px;
             min-height: 36px;
         }
-
-        .control-btn:hover { background: rgba(255,255,255,0.2); }
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
         @media (max-width: 640px) {
             .video-player-container {
@@ -183,7 +227,7 @@
         .auth-input:focus {
             border-color: #f97316;
         }
-        
+
         .google-btn {
             background: white;
             color: #374151;
@@ -197,62 +241,161 @@
         }
         .google-btn:hover {
             background: #f9fafb;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             transform: translateY(-1px);
         }
-        
+
         /* ===== FALLBACK TEMA ESCURO ===== */
-    body, 
-    .bg-yt-light, 
-    .bg-yt-dark,
-    nav, aside, main, footer,
-    .modal-upload, .modal-edit-video, .modal-report, .modal-edit-profile,
-    .bg-white, .bg-gray-100, .bg-gray-50,
-    .dark\:bg-yt-darkHover, .dark\:bg-yt-darkBorder, .dark\:bg-yt-dark {
-        background-color: #0f0f0f !important;
-        color: #f1f5f9 !important;
-    }
+        body,
+        .bg-yt-light,
+        .bg-yt-dark,
+        nav,
+        aside,
+        main,
+        footer,
+        .modal-upload,
+        .modal-edit-video,
+        .modal-report,
+        .modal-edit-profile,
+        .bg-white,
+        .bg-gray-100,
+        .bg-gray-50,
+        .dark\:bg-yt-darkHover,
+        .dark\:bg-yt-darkBorder,
+        .dark\:bg-yt-dark {
+            background-color: #0f0f0f !important;
+            color: #f1f5f9 !important;
+        }
 
-    .auth-input, .google-btn, .chip, .category-checkbox + label {
-        background-color: #1e1e1e !important;
-        color: #e5e5e5 !important;
-        border-color: #3f3f3f !important;
-    }
+        .auth-input,
+        .google-btn,
+        .chip,
+        .category-checkbox+label {
+            background-color: #1e1e1e !important;
+            color: #e5e5e5 !important;
+            border-color: #3f3f3f !important;
+        }
 
-    .google-btn:hover {
-        background-color: #ffffff !important;
-        color: #1f2937 !important;
-    }
+        .google-btn:hover {
+            background-color: #ffffff !important;
+            color: #1f2937 !important;
+        }
 
-    a, button:not(.bg-yt-brand):not(.bg-red-500) {
-        color: #e5e5e5 !important;
-    }
-    a:hover, button:hover {
-        color: #f97316 !important;
-    }
+        a,
+        button:not(.bg-yt-brand):not(.bg-red-500) {
+            color: #e5e5e5 !important;
+        }
+        a:hover,
+        button:hover {
+            color: #f97316 !important;
+        }
 
-    .bg-white, .bg-gray-100, .bg-gray-50 {
-        background-color: #272727 !important;
-    }
-    .dark\:bg-yt-darkHover {
-        background-color: #272727 !important;
-    }
+        .bg-white,
+        .bg-gray-100,
+        .bg-gray-50 {
+            background-color: #272727 !important;
+        }
+        .dark\:bg-yt-darkHover {
+            background-color: #272727 !important;
+        }
 
-    .modal-upload .bg-white, .modal-edit-video .bg-white, .modal-report .bg-white, .modal-edit-profile .bg-white {
-        background-color: #1a1a1a !important;
-    }
-    .modal-upload .bg-gray-50, .modal-edit-video .bg-gray-50 {
-        background-color: #0f0f0f !important;
-    }
+        .modal-upload .bg-white,
+        .modal-edit-video .bg-white,
+        .modal-report .bg-white,
+        .modal-edit-profile .bg-white {
+            background-color: #1a1a1a !important;
+        }
+        .modal-upload .bg-gray-50,
+        .modal-edit-video .bg-gray-50 {
+            background-color: #0f0f0f !important;
+        }
 
-    .bg-yt-brand {
-        background-color: #f97316 !important;
-        color: white !important;
-    }
-    .bg-red-500 {
-        background-color: #ef4444 !important;
-        color: white !important;
-    }
+        .bg-yt-brand {
+            background-color: #f97316 !important;
+            color: white !important;
+        }
+        .bg-red-500 {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+
+        /* Placeholder thumbnail rápido */
+        .thumb-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .thumb-placeholder .play-icon-circle {
+            width: 48px;
+            height: 48px;
+            background: rgba(249, 115, 22, 0.85);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.5);
+            transition: transform 0.3s;
+        }
+        .group:hover .thumb-placeholder .play-icon-circle {
+            transform: scale(1.15);
+        }
+        .thumb-placeholder .play-icon-circle i {
+            color: white;
+            font-size: 18px;
+            margin-left: 2px;
+        }
+
+        /* Playlist na página do player */
+        .playlist-item-active {
+            border-left: 3px solid #f97316;
+            background: rgba(249, 115, 22, 0.1);
+        }
+
+        /* Mini-player */
+        .mini-player {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 320px;
+            height: 180px;
+            z-index: 55;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+            display: none;
+            background: #000;
+        }
+        .mini-player.active {
+            display: block;
+        }
+        .mini-player video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        .mini-player .close-mini {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body class="bg-yt-light dark:bg-yt-dark text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 overflow-x-hidden">
@@ -270,9 +413,9 @@
 
         <div class="flex-1 max-w-xl px-2 sm:px-4 flex items-center">
             <div class="flex w-full bg-yt-lightHover dark:bg-yt-darkHover rounded-full border border-yt-lightBorder dark:border-yt-darkBorder overflow-hidden focus-within:border-orange-500 transition-all duration-300">
-                <input type="text" id="search-input" placeholder="O que vamos assistir?" 
-                       class="w-full bg-transparent px-3 sm:px-5 py-2 sm:py-2.5 outline-none text-xs sm:text-sm min-w-0" 
-                       onkeyup="handleSearchInput(this.value)" autocomplete="off">
+                <input type="text" id="search-input" placeholder="O que vamos assistir?"
+                class="w-full bg-transparent px-3 sm:px-5 py-2 sm:py-2.5 outline-none text-xs sm:text-sm min-w-0"
+                onkeyup="handleSearchInput(this.value)" autocomplete="off">
                 <button onclick="handleSearch()" class="px-3 sm:px-5 bg-gray-200 dark:bg-[#222] hover:bg-gray-300 dark:hover:bg-[#333] border-l border-yt-lightBorder dark:border-yt-darkBorder transition active:scale-95">
                     <i class="fas fa-search text-sm sm:text-base"></i>
                 </button>
@@ -314,7 +457,7 @@
     </aside>
 
     <main id="main-content" class="pt-14 sm:pt-16 min-h-screen transition-all duration-300 pb-20 sm:pb-24">
-        
+
         <div id="page-home" class="page active">
             <div id="search-indicator" class="hidden bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 px-3 sm:px-4 py-2 text-xs sm:text-sm">
                 <span id="search-indicator-text"></span>
@@ -334,13 +477,13 @@
                 <div class="flex flex-col lg:flex-row lg:gap-6 lg:p-6">
                     <div class="lg:w-[70%]">
                         <div class="video-player-container aspect-video" id="player-container">
-                            <video id="html-player" playsinline webkit-playsinline class="w-full h-full" onclick="togglePlay()"></video>
-                            <div class="custom-controls" id="custom-controls">
+                            <video id="html-player" playsinline webkit-playsinline class="w-full h-full" onclick="togglePlay()" crossorigin="anonymous"></video>
+                            <div class="custom-controls visible" id="custom-controls">
                                 <div class="progress-container" id="progress-container" onclick="seekVideo(event)" ontouchstart="seekVideo(event)">
                                     <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1 sm:gap-2">
+                                <div class="flex items-center justify-between flex-wrap gap-y-2">
+                                    <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
                                         <button class="control-btn" onclick="togglePlay()" id="play-btn"><i class="fas fa-pause text-sm sm:text-base"></i></button>
                                         <button class="control-btn hidden xs:flex" onclick="skipTime(-10)"><i class="fas fa-rotate-left text-xs sm:text-sm"></i><span class="text-[10px] sm:text-xs ml-1">10s</span></button>
                                         <button class="control-btn hidden xs:flex" onclick="skipTime(10)"><span class="text-[10px] sm:text-xs mr-1">10s</span><i class="fas fa-rotate-right text-xs sm:text-sm"></i></button>
@@ -350,12 +493,28 @@
                                         </div>
                                         <span class="text-white text-[10px] sm:text-xs ml-1" id="time-display">0:00 / 0:00</span>
                                     </div>
-                                    <div class="flex items-center gap-1 sm:gap-2">
+                                    <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
+                                        <button class="control-btn" onclick="toggleSubtitles()" id="cc-btn" title="Legendas"><i class="fas fa-closed-captioning text-xs sm:text-sm"></i></button>
+                                        <button class="control-btn" onclick="toggleMiniPlayer()" title="Mini Player"><i class="fas fa-window-minimize text-xs sm:text-sm"></i></button>
+                                        <button class="control-btn" onclick="toggleTheaterMode()" title="Modo Teatro"><i class="fas fa-grip-horizontal text-xs sm:text-sm"></i></button>
                                         <button class="control-btn" onclick="togglePiP()" title="Picture-in-Picture"><i class="fas fa-window-restore text-xs sm:text-sm"></i></button>
                                         <button class="control-btn" onclick="changePlaybackSpeed()" id="speed-btn"><span class="text-[10px] sm:text-xs font-bold">1x</span></button>
                                         <button class="control-btn" onclick="toggleFullscreen()"><i class="fas fa-expand text-xs sm:text-sm"></i></button>
                                     </div>
                                 </div>
+                            </div>
+                            <!-- Indicador de legenda ativa -->
+                            <div id="subtitle-indicator" class="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded hidden z-10">
+                                <i class="fas fa-closed-captioning mr-1"></i> CC
+                            </div>
+                        </div>
+                        <!-- Seção de legenda -->
+                        <div id="subtitle-section" class="hidden mt-2 p-3 bg-gray-100 dark:bg-yt-darkHover rounded-xl">
+                            <label class="text-xs font-bold flex items-center gap-2"><i class="fas fa-file-alt text-yt-brand"></i> URL da legenda (WebVTT)</label>
+                            <div class="flex gap-2 mt-1">
+                                <input type="text" id="subtitle-url" placeholder="https://...legenda.vtt" class="flex-1 auth-input text-xs py-2">
+                                <button onclick="loadSubtitle()" class="bg-yt-brand text-white px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap">Carregar</button>
+                                <button onclick="removeSubtitles()" class="bg-gray-300 dark:bg-yt-darkBorder px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap">Remover</button>
                             </div>
                         </div>
                         <div class="px-3 sm:px-0 mt-3 sm:mt-4">
@@ -392,6 +551,11 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Playlist na página do player -->
+                            <div id="player-playlist-section" class="hidden mt-4 p-4 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
+                                <h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-list text-yt-brand"></i> <span id="player-playlist-name"></span></h3>
+                                <div id="player-playlist-videos" class="space-y-2 max-h-64 overflow-y-auto"></div>
+                            </div>
                             <div class="mt-3 sm:mt-4 p-3 sm:p-5 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
                                 <p id="player-desc" class="text-xs sm:text-sm leading-relaxed whitespace-pre-line"></p>
                             </div>
@@ -413,7 +577,7 @@
 
         <div id="page-auth" class="page p-4 max-w-md mx-auto mt-8 sm:mt-12">
             <div id="auth-content" class="bg-white dark:bg-yt-darkHover p-6 sm:p-8 rounded-3xl shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder slide-up">
-                </div>
+            </div>
         </div>
 
         <div id="page-trending" class="page p-4">
@@ -422,6 +586,12 @@
         </div>
 
     </main>
+
+    <!-- Mini Player -->
+    <div id="mini-player" class="mini-player">
+        <button class="close-mini" onclick="closeMiniPlayer()"><i class="fas fa-times"></i></button>
+        <video id="mini-player-video" src="" playsinline></video>
+    </div>
 
     <footer id="app-footer" class="fixed bottom-0 left-0 right-0 h-14 sm:h-16 bg-yt-light/95 dark:bg-yt-dark/95 backdrop-blur-md border-t border-yt-lightBorder dark:border-yt-darkBorder flex items-center justify-around px-2 z-50 lg:hidden">
         <button onclick="navigateTo('home')" class="flex flex-col items-center text-gray-500 hover:text-yt-brand transition active:scale-90" data-page="home">
@@ -447,7 +617,7 @@
         </button>
     </footer>
 
-    <!-- Modal Upload (com thumbnail personalizada e playlist) -->
+    <!-- Modal Upload -->
     <div id="modal-upload" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleUploadModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
@@ -461,7 +631,6 @@
                         <div class="text-center"><i class="fas fa-image text-4xl sm:text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>
                     </div>
                 </div>
-                <!-- NOVO: Campo de thumbnail personalizada -->
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-image text-yt-brand mr-1"></i> Capa personalizada (URL opcional)</label>
                     <input type="text" id="up-thumbnail-url" placeholder="Deixe vazio para gerar automaticamente" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition" oninput="previewCustomThumbnail(this.value)">
@@ -481,7 +650,6 @@
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição</label>
                     <textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
                 </div>
-                <!-- NOVO: Campo de playlist -->
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-list text-yt-brand mr-1"></i> Playlist (opcional)</label>
                     <input type="text" id="up-playlist" placeholder="Nome da playlist para adicionar este vídeo" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
@@ -510,7 +678,7 @@
         </div>
     </div>
 
-    <!-- Modal Edit Video (mantido igual) -->
+    <!-- Modal Edit Video -->
     <div id="modal-edit-video" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleEditModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
@@ -543,7 +711,7 @@
         </div>
     </div>
 
-    <!-- Modal Report (mantido igual) -->
+    <!-- Modal Report -->
     <div id="modal-report" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="fixed inset-0 modal-overlay" onclick="toggleReportModal(false)"></div>
         <div class="bg-white dark:bg-yt-dark w-full sm:max-w-md sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder rounded-t-2xl sm:rounded-2xl">
@@ -571,12 +739,11 @@
         </div>
     </div>
 
-    <!-- Modal de Edição de Perfil MELHORADO -->
+    <!-- Modal de Edição de Perfil -->
     <div id="modal-edit-profile" class="fixed inset-0 z-[101] hidden flex items-center justify-center p-4">
         <div class="fixed inset-0 bg-black/70" onclick="closeEditProfileModal()"></div>
         <div class="bg-white dark:bg-yt-dark w-full max-w-md rounded-2xl p-6 shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold">Editar Perfil</h3>
-            <!-- NOVO: Preview da foto -->
             <div class="flex justify-center">
                 <div class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0" id="profile-photo-preview">
                     <i class="fas fa-user"></i>
@@ -590,7 +757,6 @@
                 <label class="text-xs font-bold uppercase text-gray-500">URL da Foto de Perfil</label>
                 <input type="text" id="edit-profile-photo" class="auth-input" value="" placeholder="https://..." oninput="updateProfilePhotoPreview(this.value)">
             </div>
-            <!-- NOVO: Banner URL -->
             <div>
                 <label class="text-xs font-bold uppercase text-gray-500">URL do Banner do Canal</label>
                 <input type="text" id="edit-profile-banner" class="auth-input" value="" placeholder="https://... (imagem de fundo do canal)">
@@ -599,7 +765,6 @@
                 <label class="text-xs font-bold uppercase text-gray-500">Bio</label>
                 <textarea id="edit-profile-bio" class="auth-input" rows="2"></textarea>
             </div>
-            <!-- NOVO: Links sociais -->
             <div>
                 <label class="text-xs font-bold uppercase text-gray-500">Site / Rede Social</label>
                 <input type="text" id="edit-profile-website" class="auth-input" value="" placeholder="https://seusite.com">
@@ -621,7 +786,9 @@
     </div>
 
     <script>
-        // Estado global
+        // =============================================
+        // ESTADO GLOBAL
+        // =============================================
         let state = {
             theme: 'dark',
             selectedCategory: 'all',
@@ -638,6 +805,12 @@
             likedVideos: [],
             dislikedVideos: [],
             userProfile: null,
+            theaterMode: false,
+            miniPlayerActive: false,
+            subtitleActive: false,
+            subtitleTrack: null,
+            fullscreenTimeout: null,
+            controlsVisible: true,
             categories: [
                 { id: 'anime', name: 'Anime', icon: 'fas fa-dragon' },
                 { id: 'amv', name: 'AMV', icon: 'fas fa-music' },
@@ -646,7 +819,9 @@
                 { id: 'live', name: 'Lives', icon: 'fas fa-broadcast-tower' },
                 { id: 'news', name: 'Notícias', icon: 'fas fa-newspaper' },
                 { id: 'mais18', name: '+18 Animes', icon: 'fas fa-exclamation-triangle' }
-            ]
+            ],
+            observedDurationElements: new Set(),
+            durationObserver: null
         };
 
         // =============================================
@@ -659,6 +834,9 @@
             renderCategories();
             await loadVideos();
             setupPlayerListeners();
+            setupDurationObserver();
+            setupFullscreenDetection();
+            setupMiniPlayerSync();
         }
 
         function silenceVideoAbortErrors() {
@@ -722,6 +900,62 @@
                     element.style.overflow = 'hidden';
                     btn.innerText = 'Mostrar mais';
                     if (mask) mask.style.display = 'block';
+                }
+            });
+        }
+
+        // =============================================
+        // OBSERVER PARA DURAÇÕES (LAZY)
+        // =============================================
+        function setupDurationObserver() {
+            if ('IntersectionObserver' in window) {
+                state.durationObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const videoId = entry.target.getAttribute('data-video-id');
+                            if (videoId && !state.observedDurationElements.has(videoId)) {
+                                state.observedDurationElements.add(videoId);
+                                fetchSingleDuration(videoId, entry.target);
+                            }
+                        }
+                    });
+                }, { rootMargin: '200px' });
+            }
+        }
+
+        function fetchSingleDuration(videoId, el) {
+            const video = state.allVideos.find(v => v.id === videoId);
+            if (!video || !video.url) return;
+            const tempVideo = document.createElement('video');
+            tempVideo.preload = 'metadata';
+            tempVideo.src = video.url;
+            tempVideo.addEventListener('loadedmetadata', function() {
+                if (tempVideo.duration && isFinite(tempVideo.duration)) {
+                    el.textContent = formatTime(tempVideo.duration);
+                    video.durationSeconds = tempVideo.duration;
+                } else {
+                    el.textContent = '';
+                }
+                tempVideo.remove();
+            }, { once: true });
+            tempVideo.addEventListener('error', function() {
+                el.textContent = '';
+                tempVideo.remove();
+            }, { once: true });
+            // Timeout de segurança
+            setTimeout(() => {
+                if (tempVideo && tempVideo.parentNode === null && !tempVideo.duration) {
+                    el.textContent = '';
+                    tempVideo.remove();
+                }
+            }, 8000);
+        }
+
+        function observeDurationElements() {
+            if (!state.durationObserver) return;
+            document.querySelectorAll('[data-video-id]').forEach(el => {
+                if (!state.observedDurationElements.has(el.getAttribute('data-video-id'))) {
+                    state.durationObserver.observe(el);
                 }
             });
         }
@@ -817,13 +1051,13 @@
             const avatar = document.getElementById('user-avatar');
             if (state.currentUser) {
                 const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
-                avatar.innerHTML = photo 
-                    ? `<img src="${photo}" class="w-full h-full rounded-full object-cover">`
-                    : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
+                avatar.innerHTML = photo ?
+                    `<img src="${photo}" class="w-full h-full rounded-full object-cover" loading="lazy">` :
+                    (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
                 sidebarSection.innerHTML = `
                     <div class="px-6 py-2 flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-yt-brand flex items-center justify-center text-white font-bold overflow-hidden">
-                            ${photo ? `<img src="${photo}" class="w-full h-full object-cover">` : (state.currentUser.displayName ? state.currentUser.displayName[0] : 'U')}
+                            ${photo ? `<img src="${photo}" class="w-full h-full object-cover" loading="lazy">` : (state.currentUser.displayName ? state.currentUser.displayName[0] : 'U')}
                         </div>
                         <div class="min-w-0">
                             <p class="text-sm font-bold truncate">${state.userProfile?.displayName || state.currentUser.displayName || 'Usuário'}</p>
@@ -863,7 +1097,7 @@
                     </div>
                     <div class="space-y-4">
                         <button onclick="handleGoogleLogin()" class="google-btn w-full flex items-center justify-center gap-3 py-3 rounded-xl font-bold text-sm">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5">
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" loading="lazy">
                             Continuar com Google
                         </button>
                         <div class="flex items-center gap-4 my-6"><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div><span class="text-xs text-gray-400 font-bold uppercase">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div></div>
@@ -885,7 +1119,7 @@
                     </div>
                     <div class="space-y-4">
                         <button onclick="handleGoogleLogin()" class="google-btn w-full flex items-center justify-center gap-3 py-3 rounded-xl font-bold text-sm">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5"> Entrar com Google
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" loading="lazy"> Entrar com Google
                         </button>
                         <div class="flex items-center gap-4 my-6"><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div><span class="text-xs text-gray-400 font-bold uppercase">ou</span><div class="flex-1 h-px bg-gray-200 dark:bg-yt-darkBorder"></div></div>
                         <div class="space-y-3">
@@ -962,7 +1196,6 @@
             const container = document.getElementById('profile-content');
             const p = state.userProfile || {};
             const myVideos = state.allVideos.filter(v => v.uploaderId === state.currentUser.uid);
-            // NOVO: Agrupar por playlist
             const playlists = {};
             myVideos.forEach(v => {
                 const pl = v.playlist || 'Sem playlist';
@@ -971,11 +1204,10 @@
             });
             container.innerHTML = `
                 <div class="bg-white dark:bg-yt-darkHover rounded-2xl p-6 shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder">
-                    <!-- Banner -->
-                    ${p.bannerURL ? `<div class="w-full h-32 sm:h-48 rounded-xl overflow-hidden mb-4"><img src="${p.bannerURL}" class="w-full h-full object-cover"></div>` : ''}
+                    ${p.bannerURL ? `<div class="w-full h-32 sm:h-48 rounded-xl overflow-hidden mb-4"><img src="${p.bannerURL}" class="w-full h-full object-cover" loading="lazy"></div>` : ''}
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                         <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0">
-                            ${p.photoURL ? `<img src="${p.photoURL}" class="w-full h-full object-cover">` : (p.displayName ? p.displayName[0].toUpperCase() : 'U')}
+                            ${p.photoURL ? `<img src="${p.photoURL}" class="w-full h-full object-cover" loading="lazy">` : (p.displayName ? p.displayName[0].toUpperCase() : 'U')}
                         </div>
                         <div>
                             <h2 class="text-xl font-bold">${p.displayName || 'Usuário'}</h2>
@@ -986,14 +1218,13 @@
                         </div>
                         <button onclick="openEditProfileModal()" class="ml-auto bg-gray-200 dark:bg-yt-darkHover px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition"><i class="fas fa-edit mr-1"></i> Editar Perfil</button>
                     </div>
-                    <!-- NOVO: Seções de playlists -->
                     ${Object.keys(playlists).length > 0 ? Object.entries(playlists).map(([plName, plVideos]) => `
                         <h3 class="font-bold text-lg mb-4 mt-6"><i class="fas fa-list text-yt-brand"></i> ${plName} (${plVideos.length})</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             ${plVideos.map(v => `
                                 <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                                     <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
-                                        ${v.thumbnailURL ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`}
+                                        ${getThumbnailHTML(v)}
                                     </div>
                                     <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
                                     <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
@@ -1006,7 +1237,7 @@
                         ${myVideos.length === 0 ? '<p class="text-gray-500 col-span-full py-4 text-center">Você ainda não publicou nenhum vídeo.</p>' : myVideos.map(v => `
                             <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                                 <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
-                                    ${v.thumbnailURL ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`}
+                                    ${getThumbnailHTML(v)}
                                 </div>
                                 <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
                                 <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
@@ -1017,16 +1248,27 @@
             `;
         }
 
-        // NOVO: Função para obter frame do meio
+        // NOVO: Função unificada para thumbnail HTML (rápida)
+        function getThumbnailHTML(v) {
+            if (v.thumbnailURL && (v.thumbnailURL.startsWith('http://') || v.thumbnailURL.startsWith('https://'))) {
+                return `<img src="${v.thumbnailURL}" class="video-thumbnail-img" loading="lazy" alt="${v.title || ''}">`;
+            }
+            // Placeholder rápido com CSS - sem carregar vídeo
+            return `
+                <div class="thumb-placeholder">
+                    <div class="play-icon-circle">
+                        <i class="fas fa-play"></i>
+                    </div>
+                </div>`;
+        }
+
         function getMiddleFrame(video) {
-            // Retorna um valor padrão para o parâmetro #t (metade da duração)
             if (video.durationSeconds) {
                 return Math.floor(video.durationSeconds / 2);
             }
-            return 30; // valor padrão de 30 segundos
+            return 30;
         }
 
-        // NOVO: Contar inscritos de um usuário
         async function getSubscriberCount(userId) {
             try {
                 const q = window.firestoreHelpers.query(
@@ -1040,7 +1282,6 @@
             }
         }
 
-        // NOVO: Atualizar contagem de inscritos no player
         async function updateSubscriberDisplay(uploaderId) {
             const count = await getSubscriberCount(uploaderId);
             const el = document.getElementById('player-uploader-subs');
@@ -1065,12 +1306,11 @@
             document.body.style.overflow = '';
         }
 
-        // NOVO: Preview da foto no modal
         function updateProfilePhotoPreview(url) {
             const preview = document.getElementById('profile-photo-preview');
             if (!preview) return;
             if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover" loading="lazy">`;
             } else {
                 const name = document.getElementById('edit-profile-name').value || 'U';
                 preview.innerHTML = name[0].toUpperCase();
@@ -1102,7 +1342,8 @@
                     twitter: twitter
                 });
                 await updateProfile(state.currentUser, { displayName: name, photoURL: photo });
-                state.userProfile = { ...state.userProfile, displayName: name, photoURL: photo, bio, bannerURL: banner, website, twitter };
+                state.userProfile = { ...state.userProfile, displayName: name, photoURL: photo, bio,
+                    bannerURL: banner, website, twitter };
                 updateAuthUI();
                 if (document.getElementById('page-profile').classList.contains('active')) renderProfile();
                 closeEditProfileModal();
@@ -1123,7 +1364,7 @@
 
             if (pageId !== 'player') {
                 const player = document.getElementById('html-player');
-                if (player) {
+                if (player && !state.miniPlayerActive) {
                     player.pause();
                     state.isPlaying = false;
                     updatePlayButton();
@@ -1146,11 +1387,11 @@
             const uploadCats = document.getElementById('up-categories');
             const editCats = document.getElementById('edit-categories');
 
-            const allChips = `<button onclick="filterCategory('all')" class="chip px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-yt-darkHover hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition whitespace-nowrap text-xs sm:text-sm font-medium ${state.selectedCategory === 'all' ? 'bg-yt-brand text-white dark:bg-yt-brand' : ''}">Tudo</button>` + 
+            const allChips = `<button onclick="filterCategory('all')" class="chip px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-yt-darkHover hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition whitespace-nowrap text-xs sm:text-sm font-medium ${state.selectedCategory === 'all' ? 'bg-yt-brand text-white dark:bg-yt-brand' : ''}">Tudo</button>` +
                 state.categories.map(cat => `
                 <button onclick="filterCategory('${cat.id}')" class="chip px-4 py-1.5 rounded-lg bg-gray-200 dark:bg-yt-darkHover hover:bg-gray-300 dark:hover:bg-yt-darkBorder transition whitespace-nowrap text-xs sm:text-sm font-medium ${state.selectedCategory === cat.id ? 'bg-yt-brand text-white dark:bg-yt-brand' : ''}">${cat.name}</button>
             `).join('');
-            
+
             if (chips) chips.innerHTML = allChips;
             if (sidebar) {
                 sidebar.innerHTML = state.categories.map(cat => `
@@ -1180,7 +1421,7 @@
         }
 
         // =============================================
-        // VÍDEOS
+        // VÍDEOS (com thumbnails rápidos e lazy loading)
         // =============================================
         async function loadVideos() {
             try {
@@ -1195,21 +1436,25 @@
                 state.allVideos = [];
             }
             renderVideoGrid();
-            updateAllDurations();
+            // Usar observer para durações em vez de carregar todas de uma vez
+            requestAnimationFrame(() => {
+                observeDurationElements();
+            });
         }
 
         function renderVideoGrid() {
             const grid = document.getElementById('video-grid');
             const noResults = document.getElementById('no-results');
             if (!grid) return;
-            
+
             let filtered = state.allVideos;
             if (state.selectedCategory !== 'all') {
                 filtered = filtered.filter(v => v.categories && v.categories.includes(state.selectedCategory));
             }
             if (state.currentSearch) {
                 const s = state.currentSearch.toLowerCase();
-                filtered = filtered.filter(v => v.title.toLowerCase().includes(s) || (v.description && v.description.toLowerCase().includes(s)));
+                filtered = filtered.filter(v => v.title.toLowerCase().includes(s) || (v.description && v
+                    .description.toLowerCase().includes(s)));
             }
 
             if (filtered.length === 0) {
@@ -1222,24 +1467,20 @@
             grid.innerHTML = filtered.map(v => {
                 const uploaderPhoto = v.uploaderPhotoURL || '';
                 const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
-                // NOVO: Usa thumbnailURL se existir, senão usa frame do meio
-                const thumbSrc = v.thumbnailURL 
-                    ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
-                    : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}" preload="metadata"></video>`;
                 return `
                 <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                     <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-all duration-300">
-                        ${thumbSrc}
+                        ${getThumbnailHTML(v)}
                         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl drop-shadow-lg"></i>
                         </div>
-                        <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded" id="duration-${v.id}">
+                        <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded" id="duration-${v.id}" data-video-id="${v.id}">
                             <i class="fas fa-clock mr-1"></i>
                         </div>
                     </div>
                     <div class="flex gap-3">
                         <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
-                            ${uploaderPhoto ? `<img src="${uploaderPhoto}" class="w-full h-full object-cover">` : initial}
+                            ${uploaderPhoto ? `<img src="${uploaderPhoto}" class="w-full h-full object-cover" loading="lazy">` : initial}
                         </div>
                         <div class="min-w-0">
                             <h3 class="font-bold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-yt-brand transition-colors mb-1">${v.title}</h3>
@@ -1252,28 +1493,7 @@
             }).join('');
 
             requestAnimationFrame(() => {
-                updateAllDurations();
-            });
-        }
-
-        function updateAllDurations() {
-            state.allVideos.forEach(v => {
-                const el = document.getElementById(`duration-${v.id}`);
-                if (el) {
-                    const tempVideo = document.createElement('video');
-                    tempVideo.preload = 'metadata';
-                    tempVideo.src = v.url;
-                    tempVideo.addEventListener('loadedmetadata', function() {
-                        if (tempVideo.duration && isFinite(tempVideo.duration)) {
-                            el.textContent = formatTime(tempVideo.duration);
-                            // Salva a duração para uso posterior (thumbnail do meio)
-                            v.durationSeconds = tempVideo.duration;
-                        } else {
-                            el.textContent = '';
-                        }
-                    });
-                    tempVideo.addEventListener('error', () => { el.textContent = ''; });
-                }
+                observeDurationElements();
             });
         }
 
@@ -1281,16 +1501,13 @@
             const grid = document.getElementById('trending-grid');
             if (!grid) return;
             const sorted = [...state.allVideos].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 20);
-            grid.innerHTML = sorted.length === 0 
-                ? '<p class="text-gray-500 col-span-full text-center py-8">Nenhum vídeo em alta.</p>'
-                : sorted.map(v => {
-                    const thumbSrc = v.thumbnailURL 
-                        ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
-                        : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}"></video>`;
+            grid.innerHTML = sorted.length === 0 ?
+                '<p class="text-gray-500 col-span-full text-center py-8">Nenhum vídeo em alta.</p>' :
+                sorted.map(v => {
                     return `
                     <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
                         <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
-                            ${thumbSrc}
+                            ${getThumbnailHTML(v)}
                         </div>
                         <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
                         <p class="text-xs text-gray-500">${v.views || 0} visualizações</p>
@@ -1308,6 +1525,8 @@
 
             const player = document.getElementById('html-player');
             if (player) {
+                // Remover tracks antigas
+                player.querySelectorAll('track').forEach(t => t.remove());
                 player.src = video.url;
                 document.getElementById('player-title').innerText = video.title;
                 document.getElementById('player-desc').innerText = video.description || 'Sem descrição.';
@@ -1316,19 +1535,19 @@
                 document.getElementById('dislikes-count').innerText = video.dislikes || 0;
                 const avatarEl = document.getElementById('player-uploader-avatar');
                 if (video.uploaderPhotoURL) {
-                    avatarEl.innerHTML = `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover">`;
+                    avatarEl.innerHTML =
+                        `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover" loading="lazy">`;
                 } else {
                     avatarEl.innerHTML = video.uploaderName ? video.uploaderName[0].toUpperCase() : 'U';
                 }
 
-                // NOVO: Atualizar contagem de inscritos
                 await updateSubscriberDisplay(video.uploaderId);
 
                 try {
                     await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), {
                         views: window.firestoreHelpers.increment(1)
                     });
-                } catch(e) {}
+                } catch (e) {}
 
                 updatePlayerUI();
                 loadRecommended();
@@ -1336,11 +1555,60 @@
                 updateFollowButton();
                 updateLikeButton();
                 updateDislikeButton();
+                renderPlaylistSection(video);
+                renderSubtitleSection();
 
                 player.play().catch(() => {});
                 state.isPlaying = true;
                 updatePlayButton();
+                showControls();
+                state.controlsVisible = true;
             }
+        }
+
+        // NOVO: Seção de playlist no player
+        function renderPlaylistSection(video) {
+            const section = document.getElementById('player-playlist-section');
+            const nameEl = document.getElementById('player-playlist-name');
+            const videosEl = document.getElementById('player-playlist-videos');
+            if (!section || !nameEl || !videosEl) return;
+
+            if (video.playlist && video.playlist.trim()) {
+                const playlistVideos = state.allVideos.filter(v =>
+                    v.playlist && v.playlist.trim().toLowerCase() === video.playlist.trim().toLowerCase()
+                );
+                if (playlistVideos.length > 0) {
+                    section.classList.remove('hidden');
+                    nameEl.innerText = `Playlist: ${video.playlist} (${playlistVideos.length} vídeos)`;
+                    videosEl.innerHTML = playlistVideos.map((v, idx) => `
+                        <div class="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-yt-darkBorder transition ${v.id === state.currentVideoId ? 'playlist-item-active' : ''}" onclick="openVideo('${v.id}')">
+                            <span class="text-xs font-bold text-gray-400 w-6 text-center">${idx + 1}</span>
+                            <div class="w-24 aspect-video bg-black rounded-lg overflow-hidden flex-shrink-0">
+                                ${getThumbnailHTML(v)}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-bold line-clamp-2">${v.title}</p>
+                                <p class="text-[10px] text-gray-500">${v.uploaderName || 'Uploader'} • ${v.views || 0} views</p>
+                            </div>
+                            ${v.id === state.currentVideoId ? '<i class="fas fa-play text-yt-brand text-xs"></i>' : ''}
+                        </div>
+                    `).join('');
+                    return;
+                }
+            }
+            section.classList.add('hidden');
+        }
+
+        // NOVO: Seção de legenda
+        function renderSubtitleSection() {
+            const section = document.getElementById('subtitle-section');
+            if (section) section.classList.add('hidden');
+            const indicator = document.getElementById('subtitle-indicator');
+            if (indicator) indicator.classList.add('hidden');
+            state.subtitleActive = false;
+            state.subtitleTrack = null;
+            const ccBtn = document.getElementById('cc-btn');
+            if (ccBtn) ccBtn.style.color = 'white';
         }
 
         function updatePlayerUI() {
@@ -1359,14 +1627,11 @@
             if (!list) return;
             const recs = state.allVideos.filter(v => v.id !== state.currentVideoId).slice(0, 10);
             list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => {
-                const thumbSrc = v.thumbnailURL 
-                    ? `<img src="${v.thumbnailURL}" class="video-thumbnail">` 
-                    : `<video class="video-thumbnail" src="${v.url}#t=${getMiddleFrame(v)}" preload="metadata"></video>`;
                 return `
                 <div class="flex gap-3 mb-4 cursor-pointer group" onclick="openVideo('${v.id}')">
                     <div class="w-40 aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden flex-shrink-0 relative">
-                        ${thumbSrc}
-                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}"></div>
+                        ${getThumbnailHTML(v)}
+                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}" data-video-id="${v.id}"></div>
                     </div>
                     <div class="min-w-0">
                         <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-yt-brand transition-colors">${v.title}</h4>
@@ -1378,29 +1643,17 @@
             }).join('');
 
             requestAnimationFrame(() => {
-                recs.forEach(v => {
-                    const el = document.getElementById(`rec-duration-${v.id}`);
-                    if (el) {
-                        const tempVideo = document.createElement('video');
-                        tempVideo.preload = 'metadata';
-                        tempVideo.src = v.url;
-                        tempVideo.addEventListener('loadedmetadata', function() {
-                            if (tempVideo.duration && isFinite(tempVideo.duration)) {
-                                el.textContent = formatTime(tempVideo.duration);
-                            } else {
-                                el.textContent = '';
-                            }
-                        });
-                    }
-                });
+                observeDurationElements();
             });
         }
 
         function renderEditButtons() {
             const container = document.getElementById('player-edit-buttons');
             if (!container) return;
-            if (state.currentUser && state.currentVideoData && state.currentVideoData.uploaderId === state.currentUser.uid) {
-                container.innerHTML = `<button onclick="toggleEditModal(true)" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-yt-darkHover transition"><i class="fas fa-edit"></i></button>`;
+            if (state.currentUser && state.currentVideoData && state.currentVideoData.uploaderId === state
+                .currentUser.uid) {
+                container.innerHTML =
+                    `<button onclick="toggleEditModal(true)" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-yt-darkHover transition"><i class="fas fa-edit"></i></button>`;
                 container.classList.remove('hidden');
             } else {
                 container.classList.add('hidden');
@@ -1427,7 +1680,11 @@
             const desc = document.getElementById('edit-desc').value;
             const cats = Array.from(document.querySelectorAll('[id^="edit-cat-"]:checked')).map(c => c.value);
             try {
-                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), { title, description: desc, categories: cats });
+                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), {
+                    title,
+                    description: desc,
+                    categories: cats
+                });
                 showToast('Alterações salvas!');
                 toggleEditModal(false);
                 await loadVideos();
@@ -1438,7 +1695,8 @@
         async function deleteVideo() {
             if (!confirm('Deseja realmente excluir este vídeo permanentemente?')) return;
             try {
-                await window.firestoreHelpers.deleteDoc(window.firestoreHelpers.doc(window.db, 'videos', state.currentVideoId));
+                await window.firestoreHelpers.deleteDoc(window.firestoreHelpers.doc(window.db, 'videos',
+                state.currentVideoId));
                 showToast('Vídeo excluído');
                 toggleEditModal(false);
                 await loadVideos();
@@ -1447,7 +1705,7 @@
         }
 
         // =============================================
-        // UPLOAD (ATUALIZADO COM THUMBNAIL E PLAYLIST)
+        // UPLOAD
         // =============================================
         function toggleUploadModal(show) {
             if (show && !state.currentUser) return navigateTo('auth');
@@ -1461,7 +1719,8 @@
                 document.getElementById('up-thumbnail-url').value = '';
                 document.getElementById('up-playlist').value = '';
                 document.querySelectorAll('.category-checkbox').forEach(c => c.checked = false);
-                document.getElementById('thumbnail-preview').innerHTML = '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
+                document.getElementById('thumbnail-preview').innerHTML =
+                    '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
                 const agreeTerms = document.getElementById('agree-terms');
                 if (agreeTerms) agreeTerms.checked = false;
             }
@@ -1472,60 +1731,70 @@
             if (!preview) return;
             const customThumb = document.getElementById('up-thumbnail-url').value;
             if (customThumb && (customThumb.startsWith('http://') || customThumb.startsWith('https://'))) {
-                preview.innerHTML = `<img src="${customThumb}" class="w-full h-full object-cover">`;
+                preview.innerHTML = `<img src="${customThumb}" class="w-full h-full object-cover" loading="lazy">`;
             } else if (url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov'))) {
-                preview.innerHTML = `<video class="w-full h-full object-cover" src="${url}#t=30"></video>`;
+                preview.innerHTML = `<video class="w-full h-full object-cover" src="${url}#t=30" preload="metadata"></video>`;
             }
         }
 
-        // NOVO: Preview da thumbnail personalizada
         function previewCustomThumbnail(url) {
             const preview = document.getElementById('thumbnail-preview');
             if (!preview) return;
             if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+                preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover" loading="lazy">`;
             } else {
                 const videoUrl = document.getElementById('up-url').value;
-                if (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes('.mov'))) {
-                    preview.innerHTML = `<video class="w-full h-full object-cover" src="${videoUrl}#t=30"></video>`;
+                if (videoUrl && (videoUrl.includes('.mp4') || videoUrl.includes('.webm') || videoUrl.includes(
+                    '.mov'))) {
+                    preview.innerHTML =
+                        `<video class="w-full h-full object-cover" src="${videoUrl}#t=30" preload="metadata"></video>`;
                 } else {
-                    preview.innerHTML = '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
+                    preview.innerHTML =
+                        '<div class="text-center"><i class="fas fa-image text-5xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Pré-visualização da thumbnail</p></div>';
                 }
             }
         }
 
         async function handleUpload() {
             const agreeTerms = document.getElementById('agree-terms');
-            if (agreeTerms && !agreeTerms.checked) return showToast('Você deve concordar com as regras de upload.', 'error');
-            
+            if (agreeTerms && !agreeTerms.checked) return showToast(
+            'Você deve concordar com as regras de upload.', 'error');
+
             const url = document.getElementById('up-url').value;
             const title = document.getElementById('up-title').value;
             const desc = document.getElementById('up-desc').value;
             const thumbnailURL = document.getElementById('up-thumbnail-url').value.trim();
             const playlist = document.getElementById('up-playlist').value.trim();
-            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c
+                .value);
 
-            if (!url || !title || selectedCats.length === 0) return showToast('Preencha os campos obrigatórios', 'error');
+            if (!url || !title || selectedCats.length === 0) return showToast(
+            'Preencha os campos obrigatórios', 'error');
 
             try {
                 const videoData = {
-                    url, title, description: desc,
+                    url,
+                    title,
+                    description: desc,
                     categories: selectedCats,
                     uploaderId: state.currentUser.uid,
                     uploaderName: state.userProfile?.displayName || state.currentUser.displayName,
                     uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
-                    views: 0, likes: 0, dislikes: 0, likedBy: [], dislikedBy: [],
+                    views: 0,
+                    likes: 0,
+                    dislikes: 0,
+                    likedBy: [],
+                    dislikedBy: [],
                     createdAt: window.firestoreHelpers.serverTimestamp()
                 };
-                // NOVO: Adiciona thumbnailURL se fornecida
                 if (thumbnailURL) {
                     videoData.thumbnailURL = thumbnailURL;
                 }
-                // NOVO: Adiciona playlist se fornecida
                 if (playlist) {
                     videoData.playlist = playlist;
                 }
-                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), videoData);
+                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'),
+                videoData);
                 showToast('Vídeo publicado!');
                 toggleUploadModal(false);
                 await loadVideos();
@@ -1573,7 +1842,8 @@
                     });
                     state.likedVideos.push(id);
                 }
-                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
+                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers
+                    .collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
                 state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
                 document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
                 document.getElementById('dislikes-count').innerText = state.currentVideoData.dislikes || 0;
@@ -1620,7 +1890,8 @@
                     });
                     state.dislikedVideos.push(id);
                 }
-                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers.collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
+                const updated = await window.firestoreHelpers.getDocs(window.firestoreHelpers.query(window.firestoreHelpers
+                    .collection(window.db, 'videos'), window.firestoreHelpers.where('__name__', '==', id)));
                 state.currentVideoData = { id: updated.docs[0].id, ...updated.docs[0].data() };
                 document.getElementById('likes-count').innerText = state.currentVideoData.likes || 0;
                 document.getElementById('dislikes-count').innerText = state.currentVideoData.dislikes || 0;
@@ -1667,7 +1938,6 @@
                     });
                     state.following.push(targetId);
                 }
-                // NOVO: Atualiza contagem de inscritos
                 await updateSubscriberDisplay(targetId);
                 updateFollowButton();
                 showToast(isFollowing ? 'Inscrição cancelada' : 'Inscrição realizada!');
@@ -1678,22 +1948,28 @@
             const btn = document.getElementById('btn-follow');
             const text = document.getElementById('btn-follow-text');
             if (!btn || !text) return;
-            const isFollowing = state.currentVideoData && state.following.includes(state.currentVideoData.uploaderId);
+            const isFollowing = state.currentVideoData && state.following.includes(state.currentVideoData
+            .uploaderId);
             if (isFollowing) {
-                btn.className = "bg-gray-200 dark:bg-yt-darkHover text-gray-500 px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2";
+                btn.className =
+                    "bg-gray-200 dark:bg-yt-darkHover text-gray-500 px-6 py-2.5 rounded-full font-bold text-sm flex items-center gap-2";
                 text.innerText = "Inscrito";
             } else {
-                btn.className = "bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-200 transition active:scale-95 flex items-center gap-2";
+                btn.className =
+                    "bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:bg-gray-200 transition active:scale-95 flex items-center gap-2";
                 text.innerText = "Inscrever-se";
             }
         }
 
+        // NOVO: Compartilhar com texto personalizado
         function shareVideo() {
+            const title = state.currentVideoData?.title || 'Vídeo';
             const url = window.location.href;
+            const shareText = `Venha assistir "${title}"!! ${url}`;
             if (navigator.share) {
-                navigator.share({ title: state.currentVideoData?.title || 'Vídeo', url }).catch(() => {});
+                navigator.share({ title: title, text: shareText, url }).catch(() => {});
             } else if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => showToast('Link copiado!'));
+                navigator.clipboard.writeText(shareText).then(() => showToast('Link copiado!'));
             } else {
                 showToast('Link: ' + url, 'info');
             }
@@ -1718,7 +1994,8 @@
             const details = document.getElementById('report-details').value;
             if (!reason) return showToast('Selecione um motivo.', 'error');
             try {
-                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', state.currentVideoId), {
+                await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos',
+                    state.currentVideoId), {
                     reports: window.firestoreHelpers.arrayUnion({
                         userId: state.currentUser.uid,
                         reason,
@@ -1734,7 +2011,7 @@
         }
 
         // =============================================
-        // PLAYER MELHORADO
+        // PLAYER MELHORADO (com legendas, mini-player, teatro, fullscreen auto-hide)
         // =============================================
         function setupPlayerListeners() {
             const player = document.getElementById('html-player');
@@ -1748,31 +2025,248 @@
                     progress.style.width = Math.min(perc, 100) + '%';
                 }
                 if (time) {
-                    time.innerText = `${formatTime(player.currentTime)} / ${formatTime(player.duration || 0)}`;
+                    time.innerText =
+                        `${formatTime(player.currentTime)} / ${formatTime(player.duration || 0)}`;
                 }
+                // Sync mini player
+                syncMiniPlayer();
             };
-            player.onended = () => { state.isPlaying = false; updatePlayButton(); };
+            player.onended = () => { state.isPlaying = false;
+                updatePlayButton();
+                syncMiniPlayer(); };
             player.onloadedmetadata = () => {
                 if (time) time.innerText = `0:00 / ${formatTime(player.duration || 0)}`;
             };
 
             window.addEventListener('keydown', (e) => {
-                if (document.getElementById('page-player') && document.getElementById('page-player').classList.contains('active')) {
-                    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+                if (document.getElementById('page-player') && document.getElementById('page-player')
+                    .classList.contains('active')) {
+                    if (e.code === 'Space') { e.preventDefault();
+                        togglePlay(); }
                     if (e.code === 'ArrowRight') skipTime(10);
                     if (e.code === 'ArrowLeft') skipTime(-10);
-                    if (e.code === 'ArrowUp') { e.preventDefault(); changeVolume(Math.min(1, (player.volume || 1) + 0.1)); }
-                    if (e.code === 'ArrowDown') { e.preventDefault(); changeVolume(Math.max(0, (player.volume || 1) - 0.1)); }
+                    if (e.code === 'ArrowUp') { e.preventDefault();
+                        changeVolume(Math.min(1, (player.volume || 1) + 0.1)); }
+                    if (e.code === 'ArrowDown') { e.preventDefault();
+                        changeVolume(Math.max(0, (player.volume || 1) - 0.1)); }
                 }
             });
+
+            // Eventos para auto-hide em fullscreen
+            const container = document.getElementById('player-container');
+            if (container) {
+                container.addEventListener('mousemove', resetFullscreenTimer);
+                container.addEventListener('touchstart', resetFullscreenTimer, { passive: true });
+                container.addEventListener('touchmove', resetFullscreenTimer, { passive: true });
+            }
+        }
+
+        // NOVO: Sincronizar mini player
+        function setupMiniPlayerSync() {
+            const mainPlayer = document.getElementById('html-player');
+            const miniPlayer = document.getElementById('mini-player-video');
+            if (mainPlayer && miniPlayer) {
+                mainPlayer.addEventListener('play', () => {
+                    if (state.miniPlayerActive) miniPlayer.play().catch(() => {});
+                });
+                mainPlayer.addEventListener('pause', () => {
+                    if (state.miniPlayerActive) miniPlayer.pause();
+                });
+                mainPlayer.addEventListener('seeked', () => {
+                    if (state.miniPlayerActive) miniPlayer.currentTime = mainPlayer.currentTime;
+                });
+                mainPlayer.addEventListener('volumechange', () => {
+                    if (state.miniPlayerActive) miniPlayer.volume = mainPlayer.volume;
+                });
+            }
+        }
+
+        function syncMiniPlayer() {
+            if (!state.miniPlayerActive) return;
+            const mainPlayer = document.getElementById('html-player');
+            const miniPlayer = document.getElementById('mini-player-video');
+            if (mainPlayer && miniPlayer) {
+                if (mainPlayer.paused && !miniPlayer.paused) miniPlayer.pause();
+                if (!mainPlayer.paused && miniPlayer.paused) miniPlayer.play().catch(() => {});
+                if (Math.abs(miniPlayer.currentTime - mainPlayer.currentTime) > 0.5) {
+                    miniPlayer.currentTime = mainPlayer.currentTime;
+                }
+            }
+        }
+
+        // NOVO: Mini Player
+        function toggleMiniPlayer() {
+            const miniContainer = document.getElementById('mini-player');
+            const miniVideo = document.getElementById('mini-player-video');
+            const mainPlayer = document.getElementById('html-player');
+            if (!miniContainer || !miniVideo || !mainPlayer) return;
+
+            if (state.miniPlayerActive) {
+                closeMiniPlayer();
+                return;
+            }
+
+            // Ativar mini player
+            miniVideo.src = mainPlayer.src;
+            miniVideo.currentTime = mainPlayer.currentTime;
+            miniVideo.volume = mainPlayer.volume;
+            miniVideo.playbackRate = mainPlayer.playbackRate;
+            miniContainer.classList.add('active');
+            state.miniPlayerActive = true;
+
+            if (state.isPlaying) {
+                miniVideo.play().catch(() => {});
+            }
+
+            // Não pausar o player principal
+            showToast('Mini player ativado');
+        }
+
+        function closeMiniPlayer() {
+            const miniContainer = document.getElementById('mini-player');
+            const miniVideo = document.getElementById('mini-player-video');
+            if (miniContainer) miniContainer.classList.remove('active');
+            if (miniVideo) {
+                miniVideo.pause();
+                miniVideo.src = '';
+            }
+            state.miniPlayerActive = false;
+        }
+
+        // NOVO: Modo Teatro
+        function toggleTheaterMode() {
+            const container = document.getElementById('player-container');
+            if (!container) return;
+            state.theaterMode = !state.theaterMode;
+            if (state.theaterMode) {
+                container.style.maxWidth = '100%';
+                container.style.borderRadius = '0';
+                showToast('Modo teatro ativado');
+            } else {
+                container.style.maxWidth = '';
+                container.style.borderRadius = '12px';
+                showToast('Modo teatro desativado');
+            }
+        }
+
+        // NOVO: Legendas
+        function toggleSubtitles() {
+            const section = document.getElementById('subtitle-section');
+            if (!section) return;
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        function loadSubtitle() {
+            const url = document.getElementById('subtitle-url').value.trim();
+            if (!url) return showToast('Insira a URL da legenda (.vtt)', 'error');
+            const player = document.getElementById('html-player');
+            if (!player) return;
+
+            // Remover tracks antigas
+            player.querySelectorAll('track').forEach(t => t.remove());
+
+            const track = document.createElement('track');
+            track.kind = 'subtitles';
+            track.label = 'Legenda';
+            track.srclang = 'pt';
+            track.src = url;
+            track.default = true;
+            player.appendChild(track);
+
+            // Ativar o modo de texto
+            for (let i = 0; i < player.textTracks.length; i++) {
+                player.textTracks[i].mode = 'showing';
+            }
+
+            state.subtitleActive = true;
+            state.subtitleTrack = url;
+            document.getElementById('subtitle-section').classList.add('hidden');
+            document.getElementById('subtitle-indicator').classList.remove('hidden');
+            document.getElementById('cc-btn').style.color = '#f97316';
+            document.getElementById('subtitle-url').value = '';
+            showToast('Legenda carregada!');
+        }
+
+        function removeSubtitles() {
+            const player = document.getElementById('html-player');
+            if (!player) return;
+            player.querySelectorAll('track').forEach(t => t.remove());
+            for (let i = 0; i < player.textTracks.length; i++) {
+                player.textTracks[i].mode = 'disabled';
+            }
+            state.subtitleActive = false;
+            state.subtitleTrack = null;
+            document.getElementById('subtitle-indicator').classList.add('hidden');
+            document.getElementById('cc-btn').style.color = 'white';
+            document.getElementById('subtitle-section').classList.add('hidden');
+            showToast('Legendas removidas');
+        }
+
+        // NOVO: Fullscreen auto-hide controls
+        function setupFullscreenDetection() {
+            document.addEventListener('fullscreenchange', () => {
+                if (document.fullscreenElement) {
+                    resetFullscreenTimer();
+                } else {
+                    clearTimeout(state.fullscreenTimeout);
+                    showControls();
+                }
+            });
+            document.addEventListener('webkitfullscreenchange', () => {
+                if (document.webkitFullscreenElement) {
+                    resetFullscreenTimer();
+                } else {
+                    clearTimeout(state.fullscreenTimeout);
+                    showControls();
+                }
+            });
+        }
+
+        function resetFullscreenTimer() {
+            showControls();
+            state.controlsVisible = true;
+            clearTimeout(state.fullscreenTimeout);
+            const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (isFullscreen) {
+                state.fullscreenTimeout = setTimeout(() => {
+                    hideControls();
+                    state.controlsVisible = false;
+                }, 5000);
+            }
+        }
+
+        function showControls() {
+            const controls = document.getElementById('custom-controls');
+            if (controls) {
+                controls.classList.remove('force-hidden');
+                controls.classList.add('visible');
+            }
+        }
+
+        function hideControls() {
+            const controls = document.getElementById('custom-controls');
+            if (controls) {
+                controls.classList.add('force-hidden');
+                controls.classList.remove('visible');
+            }
         }
 
         function togglePlay() {
             const player = document.getElementById('html-player');
             if (!player) return;
-            if (player.paused) { player.play(); state.isPlaying = true; }
-            else { player.pause(); state.isPlaying = false; }
+            if (player.paused) { player.play();
+                state.isPlaying = true; } else { player.pause();
+                state.isPlaying = false; }
             updatePlayButton();
+            syncMiniPlayer();
+            // Resetar timer em fullscreen
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                resetFullscreenTimer();
+            }
         }
 
         function updatePlayButton() {
@@ -1807,6 +2301,9 @@
                 else if (value < 0.5) icon.className = 'fas fa-volume-down text-sm';
                 else icon.className = 'fas fa-volume-up text-sm';
             }
+            // Sync mini player
+            const miniVideo = document.getElementById('mini-player-video');
+            if (miniVideo && state.miniPlayerActive) miniVideo.volume = value;
         }
 
         function changePlaybackSpeed() {
@@ -1819,6 +2316,9 @@
             player.playbackRate = state.currentSpeed;
             const speedBtn = document.getElementById('speed-btn');
             if (speedBtn) speedBtn.querySelector('span').innerText = state.currentSpeed + 'x';
+            // Sync mini player
+            const miniVideo = document.getElementById('mini-player-video');
+            if (miniVideo && state.miniPlayerActive) miniVideo.playbackRate = state.currentSpeed;
         }
 
         function togglePiP() {
@@ -1834,8 +2334,19 @@
         function toggleFullscreen() {
             const container = document.getElementById('player-container');
             if (container) {
-                if (container.requestFullscreen) container.requestFullscreen();
-                else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+                if (container.requestFullscreen) {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    } else {
+                        container.requestFullscreen();
+                    }
+                } else if (container.webkitRequestFullscreen) {
+                    if (document.webkitFullscreenElement) {
+                        document.webkitExitFullscreen();
+                    } else {
+                        container.webkitRequestFullscreen();
+                    }
+                }
             }
         }
 
@@ -1854,7 +2365,9 @@
 
         function formatTime(s) {
             if (!isFinite(s) || isNaN(s)) return '0:00';
-            const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+            const h = Math.floor(s / 3600),
+                m = Math.floor((s % 3600) / 60),
+                sec = Math.floor(s % 60);
             if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
             return `${m}:${sec.toString().padStart(2, '0')}`;
         }
@@ -1874,7 +2387,7 @@
             if (type === 'error') icon.className = 'fas fa-exclamation-circle text-red-400';
             else if (type === 'info') icon.className = 'fas fa-info-circle text-blue-400';
             else icon.className = 'fas fa-check-circle text-green-400';
-            
+
             toast.classList.remove('opacity-0', 'translate-y-10', 'pointer-events-none');
             toast.style.opacity = '1';
             toast.style.transform = 'translateY(0)';
