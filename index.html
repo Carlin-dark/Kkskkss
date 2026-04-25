@@ -47,6 +47,20 @@
         };
 
         console.log('Firebase inicializado com sucesso (vibtube-927d7)');
+        // Inicializar segundo app Firebase para Comentários
+const commentsApp = initializeApp({
+    apiKey: "AIzaSyBwk9D61TH9P9Gfn4DAFkzNEfMcA50-v_E",
+    authDomain: "comentari.firebaseapp.com",
+    projectId: "comentari",
+    storageBucket: "comentari.firebasestorage.app",
+    messagingSenderId: "788959101412",
+    appId: "1:788959101412:web:4887d56e7e7ee46abcc7f1"
+}, "commentsApp");
+
+window.commentsDb = getFirestore(commentsApp);
+window.commentsAuth = getAuth(commentsApp);
+
+console.log('Firebase de Comentários inicializado com sucesso!');
     </script>
 
     <style>
@@ -520,6 +534,29 @@ a.hashtag-link:hover {
     text-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
 }
 
+/* Comentários */
+#comments-section {
+    scrollbar-width: thin;
+}
+.comment-item {
+    transition: background 0.2s;
+}
+.comment-item:hover {
+    background: rgba(255,255,255,0.03);
+}
+#comments-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+#comments-list::-webkit-scrollbar {
+    width: 4px;
+}
+#comments-list::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 2px;
+}
+
 /* Badge "Novo" para vídeos recentes */
 .badge-new {
     position: absolute;
@@ -689,14 +726,55 @@ a.hashtag-link:hover {
                                     </button>
                                 </div>
                             </div>
+                            <!-- Seção de Comentários -->
+<div id="comments-section" class="mt-4 p-4 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
+    <h3 class="font-bold text-sm mb-3 flex items-center gap-2">
+        <i class="fas fa-comments text-yt-brand"></i> 
+        Comentários 
+        <span id="comments-count" class="text-gray-500 font-normal text-xs">(0)</span>
+    </h3>
+    
+    <!-- Input de comentário -->
+    <div id="comment-input-area" class="hidden mb-4">
+        <div class="flex gap-2">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden" id="comment-avatar">U</div>
+            <div class="flex-1">
+                <textarea id="comment-text" placeholder="Adicione um comentário..." rows="2" maxlength="500"
+                    class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 py-2 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
+                <div class="flex justify-between items-center mt-1">
+                    <span id="comment-counter" class="text-[10px] text-gray-400">0/500</span>
+                    <div class="flex gap-2">
+                        <button onclick="cancelComment()" class="text-xs font-bold text-gray-500 hover:text-white px-3 py-1 rounded-full transition">Cancelar</button>
+                        <button onclick="postComment()" id="btn-post-comment" class="bg-yt-brand text-white text-xs font-bold px-4 py-1.5 rounded-full hover:brightness-110 transition disabled:opacity-50" disabled>
+                            <i class="fas fa-paper-plane mr-1"></i> Comentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Botão para abrir input -->
+    <div id="comment-login-prompt" class="text-center py-3">
+        <p class="text-xs text-gray-500 mb-2">Faça login para comentar</p>
+        <button onclick="navigateTo('auth')" class="text-yt-brand text-xs font-bold hover:underline">
+            <i class="fas fa-sign-in-alt mr-1"></i> Fazer login
+        </button>
+    </div>
+    
+    <!-- Lista de comentários -->
+    <div id="comments-list" class="space-y-3 max-h-80 overflow-y-auto"></div>
+</div>
+
                             <!-- Playlist na página do player -->
+                                                        <div class="mt-3 sm:mt-4 p-3 sm:p-5 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
+                                <p id="player-desc" class="text-xs sm:text-sm leading-relaxed whitespace-pre-line"></p>
+                            </div>
                             <div id="player-playlist-section" class="hidden mt-4 p-4 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
                                 <h3 class="font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-list text-yt-brand"></i> <span id="player-playlist-name"></span></h3>
                                 <div id="player-playlist-videos" class="space-y-2 max-h-64 overflow-y-auto"></div>
                             </div>
-                            <div class="mt-3 sm:mt-4 p-3 sm:p-5 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
-                                <p id="player-desc" class="text-xs sm:text-sm leading-relaxed whitespace-pre-line"></p>
-                            </div>
+
                         </div>
                     </div>
                     <div class="lg:w-[30%] mt-4 lg:mt-0 px-3 pb-3 sm:px-0" id="recommended-list"></div>
@@ -712,6 +790,9 @@ a.hashtag-link:hover {
         <div id="page-profile" class="page p-4 max-w-4xl mx-auto">
             <div id="profile-content"></div>
         </div>
+        <div id="page-channel" class="page p-4 max-w-4xl mx-auto">
+    <div id="channel-content"></div>
+</div>
 
         <div id="page-auth" class="page p-4 max-w-md mx-auto mt-8 sm:mt-12">
             <div id="auth-content" class="bg-white dark:bg-yt-darkHover p-6 sm:p-8 rounded-3xl shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder slide-up">
@@ -785,9 +866,7 @@ a.hashtag-link:hover {
                     </div>
                 </div>
 <div>
-    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
-        <i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição
-    </label>
+
 <textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" maxlength="1500"
     class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"
     oninput="updateUpDescCounter()"></textarea>
@@ -846,20 +925,7 @@ a.hashtag-link:hover {
     oninput="updateEditDescCounter()"></textarea>
     <span id="edit-desc-counter" class="text-[10px] text-gray-400 mt-1 block text-right">0/1500</span>
 </div>
-                <div>
-                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">Categorias</label>
-                    <div class="flex flex-wrap gap-2" id="edit-categories"></div>
-                </div>
-            </div>
-            <div class="p-4 sm:p-5 bg-white dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-between sticky bottom-0">
-                <button onclick="deleteVideo()" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm bg-red-500 text-white hover:bg-red-600 transition active:scale-95"><i class="fas fa-trash"></i> Excluir</button>
-                <div class="flex gap-2 sm:gap-3">
-                    <button onclick="toggleEditModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition active:scale-95">Cancelar</button>
-                    <button onclick="saveEditVideo()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 text-xs sm:text-sm"><i class="fas fa-save"></i> Salvar</button>
-                </div>
-            </div>
-        </div>
-    </div>
+            
 
     <!-- Modal Report -->
     <div id="modal-report" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -1527,6 +1593,7 @@ function updateActiveSidebarLink(page) {
     if (pageId !== 'home') {
         window.recommendedVideoIds = [];
     }
+    if (pageId === 'channel') renderChannelPage();
     
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const pageEl = document.getElementById(`page-${pageId}`);
@@ -1721,7 +1788,8 @@ function updateActiveSidebarLink(page) {
                 player.src = video.url;
                 document.getElementById('player-title').innerText = video.title;
                 document.getElementById('player-desc').innerHTML = processDescription(video.description) || '<span class="text-gray-500">Sem descrição.</span>';
-                document.getElementById('player-uploader-name').innerText = video.uploaderName || 'Uploader';
+                const uploaderNameEl = document.getElementById('player-uploader-name');
+uploaderNameEl.innerHTML = `<span class="cursor-pointer hover:text-yt-brand transition" onclick="navigateToChannel('${video.uploaderId}')">${video.uploaderName || 'Uploader'}</span>`;
                 document.getElementById('likes-count').innerText = video.likes || 0;
                 document.getElementById('dislikes-count').innerText = video.dislikes || 0;
                 const avatarEl = document.getElementById('player-uploader-avatar');
@@ -1748,6 +1816,8 @@ function updateActiveSidebarLink(page) {
                 updateDislikeButton();
                 renderPlaylistSection(video);
                 renderSubtitleSection();
+                setupCommentInput();
+                loadComments();      
 
                 player.play().catch(() => {});
                 state.isPlaying = true;
@@ -3155,6 +3225,357 @@ function createElementFromHTML(htmlString) {
     return div.firstChild;
 }
 
+// =============================================
+// PÁGINA DE CANAL PÚBLICA
+// =============================================
+
+// Navegar para o canal de um usuário
+async function navigateToChannel(uploaderId) {
+    state.viewingChannelId = uploaderId;
+    navigateTo('channel');
+    await renderChannelPage(uploaderId);
+}
+
+// Renderizar página do canal
+async function renderChannelPage(uploaderId) {
+    const container = document.getElementById('channel-content');
+    if (!container) return;
+    
+    const uid = uploaderId || state.viewingChannelId;
+    if (!uid) return;
+    
+    try {
+        // Buscar dados do usuário
+        const userSnap = await window.firestoreHelpers.getDoc(
+            window.firestoreHelpers.doc(window.db, 'users', uid)
+        );
+        
+        if (!userSnap.exists()) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">Canal não encontrado.</p>';
+            return;
+        }
+        
+        const channelData = userSnap.data();
+        const channelVideos = state.allVideos.filter(v => v.uploaderId === uid);
+        const subscriberCount = await getSubscriberCount(uid);
+        
+        container.innerHTML = `
+            <div class="bg-white dark:bg-yt-darkHover rounded-2xl p-6 shadow-xl border border-yt-lightBorder dark:border-yt-darkBorder">
+                ${channelData.bannerURL ? `<div class="w-full h-32 sm:h-48 rounded-xl overflow-hidden mb-4"><img src="${channelData.bannerURL}" class="w-full h-full object-cover" loading="lazy"></div>` : ''}
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden flex-shrink-0">
+                        ${channelData.photoURL ? `<img src="${channelData.photoURL}" class="w-full h-full object-cover" loading="lazy">` : (channelData.displayName ? channelData.displayName[0].toUpperCase() : 'U')}
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold flex items-center gap-2">
+                            ${channelData.displayName || 'Usuário'}
+                            ${channelData.verified ? '<i class="fas fa-check-circle text-blue-400" title="Verificado"></i>' : ''}
+                        </h2>
+                        <p class="text-sm text-gray-500">${channelData.bio || 'Nenhuma bio.'}</p>
+                        <p class="text-xs text-gray-400 mt-1">${channelVideos.length} vídeos • ${subscriberCount} inscritos</p>
+                    </div>
+                    ${state.currentUser && state.currentUser.uid !== uid ? `
+                        <button onclick="toggleFollowChannel('${uid}')" id="channel-follow-btn" class="ml-auto bg-yt-brand text-white px-6 py-2.5 rounded-full font-bold text-sm hover:brightness-110 transition">
+                            ${state.following.includes(uid) ? 'Inscrito' : 'Inscrever-se'}
+                        </button>
+                    ` : ''}
+                </div>
+                
+                <h3 class="font-bold text-lg mb-4"><i class="fas fa-video text-yt-brand"></i> Vídeos (${channelVideos.length})</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${channelVideos.length === 0 ? '<p class="text-gray-500 col-span-full py-4 text-center">Nenhum vídeo publicado.</p>' : 
+                        channelVideos.map(v => `
+                            <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
+                                <div class="aspect-video bg-black rounded-xl overflow-hidden mb-2">
+                                    ${getThumbnailHTML(v)}
+                                </div>
+                                <h4 class="text-sm font-bold line-clamp-2 group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                                <p class="text-xs text-gray-500">${v.views || 0} visualizações • ${formatDate(v.createdAt)}</p>
+                            </div>
+                        `).join('')
+                    }
+                </div>
+            </div>
+        `;
+        
+    } catch (e) {
+        container.innerHTML = '<p class="text-center text-gray-500 py-8">Erro ao carregar canal.</p>';
+    }
+}
+
+// Botão de seguir na página do canal
+async function toggleFollowChannel(uploaderId) {
+    if (!state.currentUser) return navigateTo('auth');
+    
+    const isFollowing = state.following.includes(uploaderId);
+    const btn = document.getElementById('channel-follow-btn');
+    
+    try {
+        if (isFollowing) {
+            const followQ = window.firestoreHelpers.query(
+                window.firestoreHelpers.collection(window.db, 'follows'),
+                window.firestoreHelpers.where('followerId', '==', state.currentUser.uid),
+                window.firestoreHelpers.where('followedId', '==', uploaderId)
+            );
+            const snap = await window.firestoreHelpers.getDocs(followQ);
+            snap.forEach(d => window.firestoreHelpers.deleteDoc(d.ref));
+            state.following = state.following.filter(id => id !== uploaderId);
+            if (btn) btn.textContent = 'Inscrever-se';
+        } else {
+            await window.firestoreHelpers.addDoc(
+                window.firestoreHelpers.collection(window.db, 'follows'), 
+                {
+                    followerId: state.currentUser.uid,
+                    followedId: uploaderId,
+                    createdAt: window.firestoreHelpers.serverTimestamp()
+                }
+            );
+            state.following.push(uploaderId);
+            if (btn) btn.textContent = 'Inscrito';
+        }
+        
+        await renderChannelPage(uploaderId);
+        showToast(isFollowing ? 'Inscrição cancelada' : 'Inscrito com sucesso!');
+    } catch (e) {
+        showToast('Erro ao seguir canal.', 'error');
+    }
+}
+
+// Inicializar área de comentário
+function setupCommentInput() {
+    const inputArea = document.getElementById('comment-input-area');
+    const loginPrompt = document.getElementById('comment-login-prompt');
+    const avatar = document.getElementById('comment-avatar');
+    
+    if (state.currentUser) {
+        if (inputArea) inputArea.classList.remove('hidden');
+        if (loginPrompt) loginPrompt.classList.add('hidden');
+        
+        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
+        if (avatar) {
+            avatar.innerHTML = photo 
+                ? `<img src="${photo}" class="w-full h-full object-cover">` 
+                : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
+        }
+        
+        const textarea = document.getElementById('comment-text');
+        if (textarea && !textarea._hasListener) {
+            textarea.addEventListener('input', updateCommentCounter);
+            textarea._hasListener = true;
+        }
+    } else {
+        if (inputArea) inputArea.classList.add('hidden');
+        if (loginPrompt) loginPrompt.classList.remove('hidden');
+    }
+}
+
+// Atualizar contador de caracteres do comentário
+function updateCommentCounter() {
+    const textarea = document.getElementById('comment-text');
+    const counter = document.getElementById('comment-counter');
+    const btnPost = document.getElementById('btn-post-comment');
+    if (textarea && counter) {
+        counter.textContent = `${textarea.value.length}/500`;
+        if (btnPost) btnPost.disabled = textarea.value.trim().length === 0;
+    }
+}
+
+// Cancelar comentário
+function cancelComment() {
+    const textarea = document.getElementById('comment-text');
+    if (textarea) textarea.value = '';
+    updateCommentCounter();
+}
+
+// =============================================
+// SISTEMA DE COMENTÁRIOS (PROJETO SEPARADO)
+// =============================================
+
+async function loadComments() {
+    const commentsList = document.getElementById('comments-list');
+    const commentsCount = document.getElementById('comments-count');
+    if (!commentsList || !state.currentVideoId) return;
+    
+    try {
+        const commentsRef = window.firestoreHelpers.collection(
+            window.commentsDb, 'videos', state.currentVideoId, 'comments'
+        );
+        const q = window.firestoreHelpers.query(
+            commentsRef,
+            window.firestoreHelpers.orderBy('createdAt', 'desc'),
+            window.firestoreHelpers.limit(50)
+        );
+        const snapshot = await window.firestoreHelpers.getDocs(q);
+        
+        const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (commentsCount) commentsCount.textContent = `(${comments.length})`;
+        
+        if (comments.length === 0) {
+            commentsList.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-comment-dots text-2xl text-gray-600 mb-2"></i>
+                    <p class="text-xs text-gray-500">Nenhum comentário ainda. Seja o primeiro!</p>
+                </div>`;
+            return;
+        }
+        
+        commentsList.innerHTML = comments.map(c => {
+            const isOwner = state.currentUser && c.userId === state.currentUser.uid;
+            return `
+            <div class="comment-item flex gap-2 p-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">
+                    ${c.userPhoto ? `<img src="${c.userPhoto}" class="w-full h-full object-cover">` : (c.userName ? c.userName[0].toUpperCase() : 'U')}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-xs">${c.userName || 'Usuário'}</span>
+                        <span class="text-[10px] text-gray-500">${formatTimeAgo(c.createdAt?.toDate?.() || new Date(c.createdAt))}</span>
+                    </div>
+                    <p class="text-xs mt-1 break-words" id="comment-text-${c.id}">${escapeHtml(c.text || '')}</p>
+                    <div class="flex items-center gap-3 mt-1">
+                        <button onclick="toggleCommentLike('${c.id}')" class="text-[10px] text-gray-500 hover:text-red-500 transition flex items-center gap-1 ${c.likedBy?.includes(state.currentUser?.uid) ? 'text-red-500' : ''}">
+                            <i class="fas fa-heart text-[9px]"></i> <span id="comment-likes-${c.id}">${c.likes || 0}</span>
+                        </button>
+                        ${isOwner ? `
+                            <button onclick="editCommentPrompt('${c.id}', '${escapeHtml(c.text || '').replace(/'/g, "\\'")}')" class="text-[10px] text-gray-500 hover:text-yt-brand transition">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button onclick="deleteComment('${c.id}')" class="text-[10px] text-gray-500 hover:text-red-500 transition">
+                                <i class="fas fa-trash"></i> Apagar
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+        
+    } catch (e) {
+        console.error('Erro ao carregar comentários:', e);
+        commentsList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar comentários.</p>';
+    }
+}
+
+// Postar comentário
+async function postComment() {
+    if (!state.currentUser || !state.currentVideoId) return;
+    
+    const textarea = document.getElementById('comment-text');
+    const text = textarea.value.trim();
+    
+    if (!text || text.length > 500) return;
+    
+    const btnPost = document.getElementById('btn-post-comment');
+    btnPost.disabled = true;
+    btnPost.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
+    
+    try {
+        const commentsRef = window.firestoreHelpers.collection(
+            window.commentsDb, 'videos', state.currentVideoId, 'comments'
+        );
+        
+        await window.firestoreHelpers.addDoc(commentsRef, {
+            text: text,
+            userId: state.currentUser.uid,
+            userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
+            userPhoto: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+            likes: 0,
+            likedBy: [],
+            createdAt: window.firestoreHelpers.serverTimestamp()
+        });
+        
+        textarea.value = '';
+        updateCommentCounter();
+        showToast('Comentário adicionado!');
+        loadComments();
+        
+    } catch (e) {
+        showToast('Erro ao comentar: ' + e.message, 'error');
+    } finally {
+        btnPost.disabled = false;
+        btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
+    }
+}
+
+// Editar comentário
+async function editCommentPrompt(commentId, currentText) {
+    const newText = prompt('Editar comentário:', currentText);
+    if (!newText || newText.trim() === '' || newText === currentText) return;
+    if (newText.length > 500) return showToast('Máximo 500 caracteres.', 'error');
+    
+    try {
+        await window.firestoreHelpers.updateDoc(
+            window.firestoreHelpers.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId),
+            { text: newText.trim() }
+        );
+        showToast('Comentário editado!');
+        loadComments();
+    } catch (e) {
+        showToast('Erro ao editar.', 'error');
+    }
+}
+
+// Deletar comentário
+async function deleteComment(commentId) {
+    if (!confirm('Excluir este comentário?')) return;
+    
+    try {
+        await window.firestoreHelpers.deleteDoc(
+            window.firestoreHelpers.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId)
+        );
+        showToast('Comentário excluído.');
+        loadComments();
+    } catch (e) {
+        showToast('Erro ao excluir.', 'error');
+    }
+}
+
+// Curtir comentário
+async function toggleCommentLike(commentId) {
+    if (!state.currentUser) return;
+    
+    try {
+        const commentRef = window.firestoreHelpers.doc(
+            window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId
+        );
+        const commentSnap = await window.firestoreHelpers.getDoc(commentRef);
+        
+        if (!commentSnap.exists()) return;
+        
+        const data = commentSnap.data();
+        const likedBy = data.likedBy || [];
+        
+        if (likedBy.includes(state.currentUser.uid)) {
+            await window.firestoreHelpers.updateDoc(commentRef, {
+                likes: window.firestoreHelpers.increment(-1),
+                likedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
+            });
+        } else {
+            await window.firestoreHelpers.updateDoc(commentRef, {
+                likes: window.firestoreHelpers.increment(1),
+                likedBy: window.firestoreHelpers.arrayUnion(state.currentUser.uid)
+            });
+        }
+        
+        loadComments();
+    } catch (e) {
+        console.error('Erro ao curtir:', e);
+    }
+}
+
+// Formatar tempo relativo
+function formatTimeAgo(date) {
+    if (!date) return '';
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 60) return 'agora';
+    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
+    if (diff < 2592000) return `há ${Math.floor(diff / 86400)} d`;
+    if (diff < 31536000) return `há ${Math.floor(diff / 2592000)} m`;
+    return date.toLocaleDateString('pt-BR');
+}
         // Inicialização
         window.onload = init;
         window.addEventListener('hashchange', () => {
