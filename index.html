@@ -280,6 +280,20 @@
     transform: translateY(-1px);
 }
 
+/* Seção de recomendados na Home */
+#home-recommended-section {
+    position: relative;
+}
+#home-recommended-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(249,115,22,0.3), transparent);
+}
+
 /* ===== TEMA ESCURO (Fallback) ===== */
 body,
 .bg-yt-light,
@@ -779,7 +793,9 @@ button:hover {
             </div>
             <div class="p-4 sm:p-5 bg-white dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-end gap-2 sm:gap-3 sticky bottom-0">
                 <button onclick="toggleUploadModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition active:scale-95">Cancelar</button>
-                <button onclick="handleUpload()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 flex items-center gap-1.5 text-xs sm:text-sm"><i class="fas fa-upload"></i> Publicar</button>
+<button onclick="handleUploadWithAutoThumbnail()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 flex items-center gap-1.5 text-xs sm:text-sm">
+    <i class="fas fa-upload"></i> Publicar
+</button>
             </div>
         </div>
     </div>
@@ -952,18 +968,19 @@ function updateActiveSidebarLink(page) {
         // INICIALIZAÇÃO
         // =============================================
         async function init() {
-            silenceVideoAbortErrors();
-            setupTheme();
-            setupAuthListener();
-            renderCategories();
-            await loadVideos();
-            setupPlayerListeners();
-            setupDurationObserver();
-            setupFullscreenDetection();
-            setupPlayerIdleDetection();
-            setupMiniPlayerSync();
-            document.getElementById('player-desc').addEventListener('click', handleDescriptionClick);
-        }
+    silenceVideoAbortErrors();
+    setupTheme();
+    setupAuthListener();
+    renderCategories();
+    await loadVideos();
+    renderHomeRecommendations();
+    setupPlayerListeners();
+    setupDurationObserver();
+    setupFullscreenDetection();
+    setupPlayerIdleDetection();
+    setupMiniPlayerSync();
+    document.getElementById('player-desc').addEventListener('click', handleDescriptionClick);
+}
 
         function silenceVideoAbortErrors() {
             document.addEventListener('error', function(e) {
@@ -1483,6 +1500,11 @@ function updateActiveSidebarLink(page) {
         // NAVEGAÇÃO SPA
         // =============================================
         function navigateTo(pageId) {
+    // Limpa os IDs dos recomendados ao sair da Home
+    if (pageId !== 'home') {
+        window.recommendedVideoIds = [];
+    }
+    
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const pageEl = document.getElementById(`page-${pageId}`);
     if (pageEl) pageEl.classList.add('active');
@@ -1556,28 +1578,35 @@ function updateActiveSidebarLink(page) {
         // VÍDEOS (com thumbnails rápidos e lazy loading)
         // =============================================
         async function loadVideos() {
-            try {
-                const q = window.firestoreHelpers.query(
-                    window.firestoreHelpers.collection(window.db, 'videos'),
-                    window.firestoreHelpers.orderBy('createdAt', 'desc')
-                );
-                const snapshot = await window.firestoreHelpers.getDocs(q);
-                state.allVideos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (error) {
-                console.error('Erro ao carregar vídeos:', error);
-                state.allVideos = [];
-            }
-            renderVideoGrid();
-            // Usar observer para durações em vez de carregar todas de uma vez
-            requestAnimationFrame(() => {
-                observeDurationElements();
-            });
-        }
+    try {
+        const q = window.firestoreHelpers.query(
+            window.firestoreHelpers.collection(window.db, 'videos'),
+            window.firestoreHelpers.orderBy('createdAt', 'desc')
+        );
+        const snapshot = await window.firestoreHelpers.getDocs(q);
+        state.allVideos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.error('Erro ao carregar vídeos:', error);
+        state.allVideos = [];
+    }
+    renderVideoGrid();
+    requestAnimationFrame(() => {
+        observeDurationElements();
+    });
+}
 
         function renderVideoGrid() {
     const grid = document.getElementById('video-grid');
     const noResults = document.getElementById('no-results');
     if (!grid) return;
+
+    // Se estiver na Home, esconde o grid e mostra só os recomendados
+    const homePage = document.getElementById('page-home');
+    if (homePage && homePage.classList.contains('active')) {
+        grid.innerHTML = '';
+        if (noResults) noResults.classList.add('hidden');
+        return;
+    }
 
     let filtered = state.allVideos;
     if (state.selectedCategory !== 'all') {
@@ -1598,7 +1627,6 @@ function updateActiveSidebarLink(page) {
     grid.innerHTML = filtered.map(v => {
         const uploaderPhoto = v.uploaderPhotoURL || '';
         const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
-        // Alterado para 24 horas
         const isNew = v.createdAt && (Date.now() - v.createdAt.toDate().getTime()) < 24 * 60 * 60 * 1000;
         return `
         <div class="group cursor-pointer fade-in video-card rounded-2xl overflow-hidden bg-transparent" onclick="openVideo('${v.id}')">
@@ -1698,6 +1726,7 @@ function updateActiveSidebarLink(page) {
                 showControls();
                 state.controlsVisible = true;
                 resetIdleTimer();
+                saveToViewHistory(id);
             }
         }
 
@@ -2687,6 +2716,386 @@ function handleDescriptionClick(e) {
         state.currentSearch = '#' + tag;
         handleSearch();
     }
+}
+
+// =============================================
+// GERADOR AUTOMÁTICO DE THUMBNAILS
+// =============================================
+
+// Função principal: tenta capturar frame do vídeo, se falhar busca em API de anime
+async function generateThumbnail(videoUrl, videoTitle) {
+    // Tenta capturar frame do vídeo primeiro
+    const frameUrl = await captureVideoFrame(videoUrl);
+    if (frameUrl) {
+        return frameUrl;
+    }
+    
+    // Se falhar, busca imagem de anime relacionada ao título
+    const animeImageUrl = await searchAnimeImage(videoTitle);
+    if (animeImageUrl) {
+        return animeImageUrl;
+    }
+    
+    // Se tudo falhar, retorna null (usará o placeholder padrão)
+    return null;
+}
+
+// Captura um frame do vídeo no segundo 30 (ou metade da duração)
+function captureVideoFrame(videoUrl) {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.preload = 'metadata';
+        video.src = videoUrl;
+        
+        // Timeout de segurança (10 segundos)
+        const timeout = setTimeout(() => {
+            video.remove();
+            resolve(null); // Falhou, retorna null
+        }, 10000);
+        
+        video.addEventListener('loadedmetadata', () => {
+            // Pular para 30s ou metade do vídeo
+            const seekTime = Math.min(30, video.duration / 2);
+            video.currentTime = seekTime;
+        });
+        
+        video.addEventListener('seeked', () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 360;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Converter para data URL (qualidade 80%)
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                clearTimeout(timeout);
+                video.pause();
+                video.remove();
+                canvas.remove();
+                
+                // Verificar se a imagem não é totalmente preta
+                if (isFrameValid(canvas)) {
+                    resolve(dataUrl);
+                } else {
+                    resolve(null);
+                }
+            } catch (e) {
+                clearTimeout(timeout);
+                video.remove();
+                resolve(null);
+            }
+        });
+        
+        video.addEventListener('error', () => {
+            clearTimeout(timeout);
+            video.remove();
+            resolve(null);
+        });
+    });
+}
+
+// Verifica se o frame capturado não é uma tela preta/vazia
+function isFrameValid(canvas) {
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    let totalBrightness = 0;
+    
+    // Amostra 1 a cada 100 pixels para performance
+    for (let i = 0; i < pixels.length; i += 400) {
+        totalBrightness += (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+    }
+    
+    const avgBrightness = totalBrightness / (pixels.length / 400);
+    return avgBrightness > 10; // Se for muito escuro, considera inválido
+}
+
+// Busca imagem de anime usando a API do Jikan (MyAnimeList) - GRATUITA
+async function searchAnimeImage(title) {
+    try {
+        // Extrai palavras-chave do título (remove símbolos e pega as 3 primeiras palavras)
+        const keywords = title
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 2)
+            .slice(0, 3)
+            .join(' ');
+        
+        if (!keywords) return null;
+        
+        // Busca no Jikan API (MyAnimeList)
+        const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(keywords)}&limit=1`);
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+            // Retorna a imagem do anime encontrado
+            const imageUrl = data.data[0].images?.jpg?.large_image_url || 
+                           data.data[0].images?.jpg?.image_url;
+            return imageUrl || null;
+        }
+        
+        return null;
+    } catch (e) {
+        console.log('Erro ao buscar imagem de anime:', e);
+        return null;
+    }
+}
+
+// Upload modificado para gerar thumbnail automaticamente
+async function handleUploadWithAutoThumbnail() {
+    const agreeTerms = document.getElementById('agree-terms');
+    if (agreeTerms && !agreeTerms.checked) {
+        return showToast('Você deve concordar com as regras de upload.', 'error');
+    }
+
+    const url = document.getElementById('up-url').value;
+    const title = document.getElementById('up-title').value;
+    const desc = document.getElementById('up-desc').value;
+    const thumbnailURLInput = document.getElementById('up-thumbnail-url').value.trim();
+    const playlist = document.getElementById('up-playlist').value.trim();
+    const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+
+    if (!url || !title || selectedCats.length === 0) {
+        return showToast('Preencha os campos obrigatórios', 'error');
+    }
+
+    try {
+        let thumbnailURL = thumbnailURLInput;
+        
+        // Se não foi fornecida uma thumbnail, gera automaticamente
+        if (!thumbnailURL) {
+            showToast('Gerando capa automaticamente...', 'info');
+            
+            // Mostra indicador de carregamento
+            const preview = document.getElementById('thumbnail-preview');
+            if (preview) {
+                preview.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin text-3xl text-yt-brand mb-2"></i>
+                        <p class="text-xs text-gray-400">Gerando capa...</p>
+                    </div>`;
+            }
+            
+            thumbnailURL = await generateThumbnail(url, title);
+        }
+        
+        const videoData = {
+            url,
+            title,
+            description: desc,
+            categories: selectedCats,
+            uploaderId: state.currentUser.uid,
+            uploaderName: state.userProfile?.displayName || state.currentUser.displayName,
+            uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+            views: 0,
+            likes: 0,
+            dislikes: 0,
+            likedBy: [],
+            dislikedBy: [],
+            createdAt: window.firestoreHelpers.serverTimestamp()
+        };
+        
+        if (thumbnailURL) {
+            videoData.thumbnailURL = thumbnailURL;
+        }
+        if (playlist) {
+            videoData.playlist = playlist;
+        }
+        
+        await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), videoData);
+        
+        showToast(thumbnailURL ? 'Vídeo publicado com capa automática!' : 'Vídeo publicado!');
+        toggleUploadModal(false);
+        await loadVideos();
+    } catch (e) {
+        showToast('Erro ao publicar: ' + e.message, 'error');
+    }
+}
+
+// =============================================
+// SISTEMA DE RECOMENDADOS NA HOME
+// =============================================
+
+// Salvar visualização no histórico do usuário (já existe parcialmente no openVideo, vamos reforçar)
+async function saveToViewHistory(videoId) {
+    if (!state.currentUser) return;
+    
+    try {
+        const userRef = window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid);
+        const userSnap = await window.firestoreHelpers.getDoc(userRef);
+        
+        if (userSnap.exists()) {
+            let viewHistory = userSnap.data().viewHistory || [];
+            
+            // Remove se já existir (para não duplicar)
+            viewHistory = viewHistory.filter(v => v.videoId !== videoId);
+            
+            // Adiciona no início
+            viewHistory.unshift({
+                videoId: videoId,
+                watchedAt: new Date().toISOString(),
+                categories: state.currentVideoData?.categories || []
+            });
+            
+            // Mantém apenas os últimos 50
+            viewHistory = viewHistory.slice(0, 50);
+            
+            await window.firestoreHelpers.updateDoc(userRef, {
+                viewHistory: viewHistory
+            });
+        }
+    } catch (e) {
+        console.log('Erro ao salvar histórico:', e);
+    }
+}
+
+// Obtém as categorias favoritas do usuário baseado no histórico
+async function getUserFavoriteCategories() {
+    if (!state.currentUser) return [];
+    
+    try {
+        const userSnap = await window.firestoreHelpers.getDoc(
+            window.firestoreHelpers.doc(window.db, 'users', state.currentUser.uid)
+        );
+        
+        if (userSnap.exists()) {
+            const viewHistory = userSnap.data().viewHistory || [];
+            
+            // Conta visualizações por categoria
+            const categoryCount = {};
+            viewHistory.forEach(v => {
+                if (v.categories) {
+                    v.categories.forEach(cat => {
+                        categoryCount[cat] = (categoryCount[cat] || 0) + 1;
+                    });
+                }
+            });
+            
+            // Ordena por contagem (mais assistidas primeiro)
+            const sortedCategories = Object.entries(categoryCount)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+            
+            return sortedCategories;
+        }
+    } catch (e) {
+        console.log('Erro ao obter categorias favoritas:', e);
+    }
+    
+    return [];
+}
+
+async function renderHomeRecommendations() {
+    const homePage = document.getElementById('page-home');
+    if (!homePage || !homePage.classList.contains('active')) return;
+    
+    // Remove seção anterior se existir
+    const existingSection = document.getElementById('home-recommended-section');
+    if (existingSection) existingSection.remove();
+    
+    // Busca categorias favoritas do usuário
+    const favoriteCategories = await getUserFavoriteCategories();
+    
+    let recommendedVideos = [];
+    
+    if (favoriteCategories.length > 0 && state.currentUser) {
+        // Prioriza vídeos das categorias favoritas
+        const matchingVideos = state.allVideos.filter(v => 
+            v.categories && v.categories.some(cat => favoriteCategories.includes(cat))
+        );
+        
+        // Vídeos que não estão nas categorias favoritas
+        const otherVideos = state.allVideos.filter(v => 
+            !matchingVideos.includes(v)
+        );
+        
+        // Embaralha os das categorias favoritas
+        matchingVideos.sort(() => Math.random() - 0.5);
+        otherVideos.sort(() => Math.random() - 0.5);
+        
+        // Prioriza os das categorias favoritas (máximo 10)
+        recommendedVideos = [...matchingVideos, ...otherVideos].slice(0, 10);
+    } else {
+        // Se não há usuário logado ou histórico, mostra os mais populares
+        recommendedVideos = [...state.allVideos]
+            .sort((a, b) => (b.likes || 0) - (a.likes || 0))
+            .slice(0, 10);
+    }
+    
+    if (recommendedVideos.length === 0) return;
+    
+    // Salva os IDs dos recomendados para filtrar do grid principal
+    window.recommendedVideoIds = recommendedVideos.map(v => v.id);
+    
+    // Cria a seção HTML
+    const sectionHTML = `
+        <div id="home-recommended-section" class="px-3 sm:px-4 mb-1 mt-2 fade-in">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-star text-yt-brand"></i>
+                    ${state.currentUser ? 'Recomendados para você' : 'Em destaque'}
+                </h2>
+                <span class="text-[10px] sm:text-xs text-gray-500">
+                    ${state.currentUser ? 'Baseado no que você assiste' : 'Mais populares da plataforma'}
+                </span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                ${recommendedVideos.map(v => {
+                    const uploaderPhoto = v.uploaderPhotoURL || '';
+                    const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
+                    const isNew = v.createdAt && (Date.now() - v.createdAt.toDate().getTime()) < 24 * 60 * 60 * 1000;
+                    return `
+                    <div class="group cursor-pointer fade-in video-card rounded-xl overflow-hidden bg-transparent" onclick="openVideo('${v.id}')">
+                        <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden mb-2 shadow-sm transition-all duration-300">
+                            ${getThumbnailHTML(v)}
+                            ${isNew ? '<div class="badge-new">Novo</div>' : ''}
+                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-xl drop-shadow-lg"></i>
+                            </div>
+                            <div class="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                                <span id="home-rec-duration-${v.id}" data-video-id="${v.id}">
+                                    <i class="fas fa-clock mr-1"></i>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="px-1">
+                            <h4 class="font-bold text-xs sm:text-sm leading-snug line-clamp-2 group-hover:text-yt-brand transition-colors mb-1">${v.title}</h4>
+                            <p class="text-[10px] sm:text-xs text-gray-400 truncate">${v.uploaderName || 'Uploader'}</p>
+                            <p class="text-[9px] sm:text-[10px] text-gray-500">${v.views || 0} visualizações</p>
+                        </div>
+                    </div>
+                    `;
+                }).join('')}
+            </div>
+            <div class="border-b border-yt-lightBorder dark:border-yt-darkBorder mt-4 mb-2"></div>
+        </div>
+    `;
+    
+    // Insere a seção antes do grid de vídeos
+    const videoGrid = document.getElementById('video-grid');
+    if (videoGrid && videoGrid.parentNode) {
+        videoGrid.parentNode.insertBefore(
+            createElementFromHTML(sectionHTML),
+            videoGrid
+        );
+    }
+    
+    // Reobserva elementos de duração
+    requestAnimationFrame(() => {
+        observeDurationElements();
+    });
+}
+// Helper para criar elemento a partir de string HTML
+function createElementFromHTML(htmlString) {
+    const div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.firstChild;
 }
 
         // Inicialização
