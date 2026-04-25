@@ -2994,40 +2994,39 @@ async function searchAnimeImage(title) {
 }
 
 // Upload modificado para gerar thumbnail automaticamente
+// Upload modificado para gerar thumbnail automaticamente
 async function handleUploadWithAutoThumbnail() {
     const agreeTerms = document.getElementById('agree-terms');
     if (agreeTerms && !agreeTerms.checked) {
         return showToast('Você deve concordar com as regras de upload.', 'error');
     }
 
-    const url = document.getElementById('up-url').value;
-    const title = document.getElementById('up-title').value;
-    const desc = document.getElementById('up-desc').value;
+    const url = document.getElementById('up-url').value.trim();
+    const title = document.getElementById('up-title').value.trim();
+    const desc = document.getElementById('up-desc').value.trim();
     const thumbnailURLInput = document.getElementById('up-thumbnail-url').value.trim();
     const playlist = document.getElementById('up-playlist').value.trim();
     const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
 
-    if (!url || !title || selectedCats.length === 0) {
-        return showToast('Preencha os campos obrigatórios', 'error');
+    if (!url || !title) {
+        return showToast('Preencha URL e Título.', 'error');
+    }
+    if (selectedCats.length === 0) {
+        return showToast('Selecione ao menos uma categoria.', 'error');
+    }
+
+    const btnPublicar = document.querySelector('#modal-upload button.bg-yt-brand');
+    if (btnPublicar) {
+        btnPublicar.disabled = true;
+        btnPublicar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Publicando...';
     }
 
     try {
         let thumbnailURL = thumbnailURLInput;
         
-        // Se não foi fornecida uma thumbnail, gera automaticamente
+        // Se não foi fornecida thumbnail, tenta gerar automaticamente
         if (!thumbnailURL) {
             showToast('Gerando capa automaticamente...', 'info');
-            
-            // Mostra indicador de carregamento
-            const preview = document.getElementById('thumbnail-preview');
-            if (preview) {
-                preview.innerHTML = `
-                    <div class="text-center">
-                        <i class="fas fa-spinner fa-spin text-3xl text-yt-brand mb-2"></i>
-                        <p class="text-xs text-gray-400">Gerando capa...</p>
-                    </div>`;
-            }
-            
             thumbnailURL = await generateThumbnail(url, title);
         }
         
@@ -3054,13 +3053,110 @@ async function handleUploadWithAutoThumbnail() {
             videoData.playlist = playlist;
         }
         
-        await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), videoData);
+        await window.firestoreHelpers.addDoc(
+            window.firestoreHelpers.collection(window.db, 'videos'), 
+            videoData
+        );
         
-        showToast(thumbnailURL ? 'Vídeo publicado com capa automática!' : 'Vídeo publicado!');
+        showToast(thumbnailURL ? 'Vídeo publicado com capa!' : 'Vídeo publicado!');
         toggleUploadModal(false);
         await loadVideos();
+        
     } catch (e) {
+        console.error('Erro ao publicar:', e);
         showToast('Erro ao publicar: ' + e.message, 'error');
+    } finally {
+        if (btnPublicar) {
+            btnPublicar.disabled = false;
+            btnPublicar.innerHTML = '<i class="fas fa-upload"></i> Publicar';
+        }
+    }
+}
+
+// Função principal: tenta capturar frame do vídeo
+async function generateThumbnail(videoUrl, videoTitle) {
+    // Tenta capturar frame primeiro
+    const frameUrl = await captureVideoFrame(videoUrl);
+    if (frameUrl) return frameUrl;
+    
+    // Se falhar, busca imagem de anime
+    const animeUrl = await searchAnimeImage(videoTitle);
+    if (animeUrl) return animeUrl;
+    
+    // Se tudo falhar, retorna null (usa placeholder)
+    return null;
+}
+
+// Captura um frame do vídeo
+function captureVideoFrame(videoUrl) {
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.crossOrigin = 'anonymous';
+        video.preload = 'metadata';
+        video.src = videoUrl;
+        
+        const timeout = setTimeout(() => {
+            video.remove();
+            resolve(null);
+        }, 8000);
+        
+        video.addEventListener('loadedmetadata', () => {
+            const seekTime = Math.min(30, (video.duration || 60) / 2);
+            video.currentTime = seekTime;
+        });
+        
+        video.addEventListener('seeked', () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 360;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                
+                clearTimeout(timeout);
+                video.pause();
+                video.remove();
+                canvas.remove();
+                resolve(dataUrl);
+            } catch (e) {
+                clearTimeout(timeout);
+                video.remove();
+                resolve(null);
+            }
+        });
+        
+        video.addEventListener('error', () => {
+            clearTimeout(timeout);
+            video.remove();
+            resolve(null);
+        });
+        
+        // Se já tiver metadados carregados
+        if (video.readyState >= 1) {
+            const seekTime = Math.min(30, (video.duration || 60) / 2);
+            video.currentTime = seekTime;
+        }
+    });
+}
+
+// Busca imagem de anime
+async function searchAnimeImage(title) {
+    try {
+        const keywords = title.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2).slice(0, 3).join(' ');
+        if (!keywords) return null;
+        
+        const response = await fetch('https://api.jikan.moe/v4/anime?q=' + encodeURIComponent(keywords) + '&limit=1');
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        if (data.data && data.data.length > 0) {
+            return data.data[0].images?.jpg?.large_image_url || 
+                   data.data[0].images?.jpg?.image_url || null;
+        }
+        return null;
+    } catch (e) {
+        return null;
     }
 }
 
@@ -3367,6 +3463,10 @@ async function toggleFollowChannel(uploaderId) {
 // SISTEMA DE COMENTÁRIOS
 // =============================================
 
+// =============================================
+// SISTEMA DE COMENTÁRIOS (CORRIGIDO)
+// =============================================
+
 function setupCommentInput() {
     const inputArea = document.getElementById('comment-input-area');
     const loginPrompt = document.getElementById('comment-login-prompt');
@@ -3390,9 +3490,9 @@ function setupCommentInput() {
         const textarea = document.getElementById('comment-text');
         if (textarea && !textarea._hasCommentListener) {
             textarea.addEventListener('input', function() {
-                const counter = document.getElementById('comment-counter');
-                const btn = document.getElementById('btn-post-comment');
-                const len = textarea.value.length;
+                var counter = document.getElementById('comment-counter');
+                var btn = document.getElementById('btn-post-comment');
+                var len = textarea.value.length;
                 if (counter) counter.textContent = len + '/500';
                 if (btn) btn.disabled = len === 0;
             });
@@ -3408,7 +3508,7 @@ function setupCommentInput() {
 }
 
 function cancelComment() {
-    const textarea = document.getElementById('comment-text');
+    var textarea = document.getElementById('comment-text');
     if (textarea) {
         textarea.value = '';
         document.getElementById('comment-counter').textContent = '0/500';
@@ -3417,15 +3517,16 @@ function cancelComment() {
 }
 
 async function loadComments() {
-    const list = document.getElementById('comments-list');
-    const count = document.getElementById('comments-count');
+    var list = document.getElementById('comments-list');
+    var count = document.getElementById('comments-count');
     if (!list || !state.currentVideoId) return;
     
     try {
-        const ref = collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
-        const q = query(ref, orderBy('createdAt', 'desc'), limit(50));
-        const snap = await getDocs(q);
-        const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        var h = window.firestoreHelpers;
+        var ref = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        var q = h.query(ref, h.orderBy('createdAt', 'desc'), h.limit(50));
+        var snap = await h.getDocs(q);
+        var comments = snap.docs.map(function(d) { return { id: d.id, data: d.data() }; });
         
         if (count) count.textContent = '(' + comments.length + ')';
         
@@ -3434,44 +3535,49 @@ async function loadComments() {
             return;
         }
         
-        list.innerHTML = comments.map(c => {
-            const isOwner = state.currentUser && c.userId === state.currentUser.uid;
-            let timeStr = '';
+        list.innerHTML = comments.map(function(c) {
+            var data = c.data;
+            var isOwner = state.currentUser && data.userId === state.currentUser.uid;
+            var timeStr = 'agora';
             try {
-                const time = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt || Date.now());
+                var time = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now());
                 timeStr = formatTimeAgo(time);
-            } catch(e) { timeStr = 'agora'; }
+            } catch(e) {}
             
-            // Botões de interação só aparecem se estiver logado
-            const actionButtons = state.currentUser ? `
-                <div class="flex items-center gap-3 mt-1">
-                    <button onclick="toggleCommentLike('${c.id}')" class="text-[10px] ${(c.likedBy || []).includes(state.currentUser.uid) ? 'text-red-500' : 'text-gray-500'} hover:text-red-500 transition">
-                        <i class="fas fa-heart text-[9px]"></i> ${c.likes || 0}
-                    </button>
-                    ${isOwner ? '<button onclick="deleteComment(\'' + c.id + '\')" class="text-[10px] text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>' : ''}
-                </div>` : `
-                <div class="flex items-center gap-3 mt-1">
-                    <span class="text-[10px] text-gray-500"><i class="fas fa-heart text-[9px]"></i> ${c.likes || 0}</span>
-                </div>`;
+            var liked = data.likedBy && data.likedBy.includes(state.currentUser && state.currentUser.uid);
+            
+            var actions = '';
+            if (state.currentUser) {
+                actions = '<div class="flex items-center gap-3 mt-1">' +
+                    '<button onclick="toggleCommentLike(\'' + c.id + '\')" class="text-[10px] ' + (liked ? 'text-red-500' : 'text-gray-500') + ' hover:text-red-500 transition">' +
+                        '<i class="fas fa-heart text-[9px]"></i> ' + (data.likes || 0) +
+                    '</button>' +
+                    (isOwner ? '<button onclick="deleteComment(\'' + c.id + '\')" class="text-[10px] text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>' : '') +
+                '</div>';
+            } else {
+                actions = '<div class="flex items-center gap-3 mt-1">' +
+                    '<span class="text-[10px] text-gray-500"><i class="fas fa-heart text-[9px]"></i> ' + (data.likes || 0) + '</span>' +
+                '</div>';
+            }
             
             return '<div class="flex gap-2 p-2 rounded-lg">' +
                 '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">' +
-                    (c.userPhoto ? '<img src="' + c.userPhoto + '" class="w-full h-full object-cover">' : (c.userName || 'U')[0].toUpperCase()) +
+                    (data.userPhoto ? '<img src="' + data.userPhoto + '" class="w-full h-full object-cover">' : (data.userName || 'U').charAt(0).toUpperCase()) +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
                     '<div class="flex items-center gap-2">' +
-                        '<span class="font-bold text-xs">' + (c.userName || 'Usuário') + '</span>' +
+                        '<span class="font-bold text-xs">' + (data.userName || 'Usuário') + '</span>' +
                         '<span class="text-[10px] text-gray-500">' + timeStr + '</span>' +
                     '</div>' +
-                    '<p class="text-xs mt-1 break-words">' + (c.text || '') + '</p>' +
-                    actionButtons +
+                    '<p class="text-xs mt-1 break-words">' + (data.text || '') + '</p>' +
+                    actions +
                 '</div>' +
             '</div>';
         }).join('');
         
     } catch (e) {
         console.error('Erro ao carregar comentários:', e);
-        list.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar comentários.</p>';
+        list.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar.</p>';
     }
 }
 
@@ -3481,29 +3587,27 @@ async function postComment() {
         return;
     }
     
-    const textarea = document.getElementById('comment-text');
+    var textarea = document.getElementById('comment-text');
     if (!textarea) return;
     
-    const text = textarea.value.trim();
+    var text = textarea.value.trim();
     if (!text) return;
-    if (text.length > 500) {
-        showToast('Máximo 500 caracteres.', 'error');
-        return;
-    }
+    if (text.length > 500) { showToast('Máximo 500 caracteres.', 'error'); return; }
     
-    const btn = document.getElementById('btn-post-comment');
+    var btn = document.getElementById('btn-post-comment');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>'; }
     
     try {
-        const ref = collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
-        await addDoc(ref, {
+        var h = window.firestoreHelpers;
+        var ref = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        await h.addDoc(ref, {
             text: text,
             userId: state.currentUser.uid,
             userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
             userPhoto: state.userProfile?.photoURL || '',
             likes: 0,
             likedBy: [],
-            createdAt: serverTimestamp()
+            createdAt: h.serverTimestamp()
         });
         
         textarea.value = '';
@@ -3513,8 +3617,8 @@ async function postComment() {
         loadComments();
         
     } catch (e) {
-        console.error('Erro ao comentar:', e);
-        showToast('Erro ao comentar. Tente novamente.', 'error');
+        console.error('Erro:', e);
+        showToast('Erro ao comentar.', 'error');
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; }
     }
 }
@@ -3522,28 +3626,25 @@ async function postComment() {
 async function deleteComment(commentId) {
     if (!confirm('Excluir comentário?')) return;
     try {
-        await deleteDoc(doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId));
+        var h = window.firestoreHelpers;
+        await h.deleteDoc(h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId));
         showToast('Excluído!');
         loadComments();
-    } catch (e) {
-        showToast('Erro ao excluir', 'error');
-    }
+    } catch (e) { showToast('Erro ao excluir', 'error'); }
 }
 
 async function toggleCommentLike(commentId) {
-    if (!state.currentUser) {
-        showToast('Faça login para curtir.', 'info');
-        return;
-    }
+    if (!state.currentUser) { showToast('Faça login para curtir.', 'info'); return; }
     try {
-        const ref = doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
-        const snap = await getDoc(ref);
+        var h = window.firestoreHelpers;
+        var ref = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
+        var snap = await h.getDoc(ref);
         if (!snap.exists()) return;
-        const data = snap.data();
+        var data = snap.data();
         if ((data.likedBy || []).includes(state.currentUser.uid)) {
-            await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(state.currentUser.uid) });
+            await h.updateDoc(ref, { likes: h.increment(-1), likedBy: h.arrayRemove(state.currentUser.uid) });
         } else {
-            await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(state.currentUser.uid) });
+            await h.updateDoc(ref, { likes: h.increment(1), likedBy: h.arrayUnion(state.currentUser.uid) });
         }
         loadComments();
     } catch (e) { console.error(e); }
@@ -3551,7 +3652,7 @@ async function toggleCommentLike(commentId) {
 
 function formatTimeAgo(date) {
     if (!date) return '';
-    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    var diff = Math.floor((Date.now() - date.getTime()) / 1000);
     if (diff < 60) return 'agora';
     if (diff < 3600) return 'há ' + Math.floor(diff/60) + ' min';
     if (diff < 86400) return 'há ' + Math.floor(diff/3600) + ' h';
