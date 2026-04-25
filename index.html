@@ -3346,226 +3346,11 @@ async function toggleFollowChannel(uploaderId) {
     }
 }
 
-// Inicializar área de comentário
-function setupCommentInput() {
-    const inputArea = document.getElementById('comment-input-area');
-    const loginPrompt = document.getElementById('comment-login-prompt');
-    const avatar = document.getElementById('comment-avatar');
-    
-    if (state.currentUser) {
-        if (inputArea) inputArea.classList.remove('hidden');
-        if (loginPrompt) loginPrompt.classList.add('hidden');
-        
-        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
-        if (avatar) {
-            avatar.innerHTML = photo 
-                ? `<img src="${photo}" class="w-full h-full object-cover">` 
-                : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
-        }
-        
-        const textarea = document.getElementById('comment-text');
-        if (textarea && !textarea._hasListener) {
-            textarea.addEventListener('input', updateCommentCounter);
-            textarea._hasListener = true;
-        }
-    } else {
-        if (inputArea) inputArea.classList.add('hidden');
-        if (loginPrompt) loginPrompt.classList.remove('hidden');
-    }
-}
 
-// Atualizar contador de caracteres do comentário
-function updateCommentCounter() {
-    const textarea = document.getElementById('comment-text');
-    const counter = document.getElementById('comment-counter');
-    const btnPost = document.getElementById('btn-post-comment');
-    if (textarea && counter) {
-        counter.textContent = `${textarea.value.length}/500`;
-        if (btnPost) btnPost.disabled = textarea.value.trim().length === 0;
-    }
-}
 
-// Cancelar comentário
-function cancelComment() {
-    const textarea = document.getElementById('comment-text');
-    if (textarea) textarea.value = '';
-    updateCommentCounter();
-}
 
-// Inicializar área de comentário
-function setupCommentInput() {
-    const inputArea = document.getElementById('comment-input-area');
-    const loginPrompt = document.getElementById('comment-login-prompt');
-    const avatar = document.getElementById('comment-avatar');
-    
-    if (state.currentUser) {
-        if (inputArea) inputArea.classList.remove('hidden');
-        if (loginPrompt) loginPrompt.classList.add('hidden');
-        
-        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
-        if (avatar) {
-            avatar.innerHTML = photo 
-                ? `<img src="${photo}" class="w-full h-full object-cover">` 
-                : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
-        }
-        
-        const textarea = document.getElementById('comment-text');
-        if (textarea && !textarea._hasListener) {
-            textarea.addEventListener('input', updateCommentCounter);
-            textarea.addEventListener('keydown', function(e) {
-                if (e.code === 'Space') {
-                    e.stopPropagation(); // IMPEDE QUE O ESPAÇO PAUSE O VÍDEO
-                }
-            });
-            textarea._hasListener = true;
-        }
-    } else {
-        if (inputArea) inputArea.classList.add('hidden');
-        if (loginPrompt) loginPrompt.classList.remove('hidden');
-    }
-}
 
-// Atualizar contador de caracteres do comentário
-function updateCommentCounter() {
-    const textarea = document.getElementById('comment-text');
-    const counter = document.getElementById('comment-counter');
-    const btnPost = document.getElementById('btn-post-comment');
-    if (textarea && counter) {
-        counter.textContent = `${textarea.value.length}/500`;
-        if (btnPost) btnPost.disabled = textarea.value.trim().length === 0;
-    }
-}
 
-// Cancelar comentário
-function cancelComment() {
-    const textarea = document.getElementById('comment-text');
-    if (textarea) textarea.value = '';
-    updateCommentCounter();
-}
-
-// Postar comentário
-async function postComment() {
-    if (!state.currentUser || !state.currentVideoId) return;
-    
-    const textarea = document.getElementById('comment-text');
-    const text = textarea.value.trim();
-    
-    if (!text) return;
-    if (text.length > 500) {
-        showToast('Máximo 500 caracteres.', 'error');
-        return;
-    }
-    
-    const btnPost = document.getElementById('btn-post-comment');
-    btnPost.disabled = true;
-    btnPost.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
-    
-    try {
-        // Tenta salvar no projeto de comentários
-        const commentsRef = window.firestoreHelpers.collection(
-            window.commentsDb, 'videos', state.currentVideoId, 'comments'
-        );
-        
-        await window.firestoreHelpers.addDoc(commentsRef, {
-            text: text,
-            userId: state.currentUser.uid,
-            userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
-            userPhoto: state.userProfile?.photoURL || state.currentUser.photoURL || '',
-            likes: 0,
-            likedBy: [],
-            createdAt: window.firestoreHelpers.serverTimestamp()
-        });
-        
-        textarea.value = '';
-        updateCommentCounter();
-        showToast('Comentário adicionado!');
-        await loadComments();
-        
-    } catch (e) {
-        console.error('Erro ao comentar:', e);
-        
-        // FALLBACK: Se o projeto de comentários falhar, tenta salvar no projeto principal
-        try {
-            const fallbackRef = window.firestoreHelpers.collection(
-                window.db, 'videos', state.currentVideoId, 'comments'
-            );
-            
-            await window.firestoreHelpers.addDoc(fallbackRef, {
-                text: text,
-                userId: state.currentUser.uid,
-                userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
-                userPhoto: state.userProfile?.photoURL || state.currentUser.photoURL || '',
-                likes: 0,
-                likedBy: [],
-                createdAt: window.firestoreHelpers.serverTimestamp()
-            });
-            
-            textarea.value = '';
-            updateCommentCounter();
-            showToast('Comentário adicionado! (modo alternativo)');
-            await loadCommentsFallback(); // Carrega do projeto principal
-            
-        } catch (fallbackError) {
-            console.error('Fallback também falhou:', fallbackError);
-            showToast('Erro ao comentar. Verifique seu bloqueador de anúncios.', 'error');
-        }
-    } finally {
-        btnPost.disabled = false;
-        btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
-    }
-}
-
-// Função de fallback para carregar comentários do projeto principal
-async function loadCommentsFallback() {
-    const commentsList = document.getElementById('comments-list');
-    const commentsCount = document.getElementById('comments-count');
-    if (!commentsList || !state.currentVideoId) return;
-    
-    try {
-        const commentsRef = window.firestoreHelpers.collection(
-            window.db, 'videos', state.currentVideoId, 'comments'
-        );
-        const q = window.firestoreHelpers.query(
-            commentsRef,
-            window.firestoreHelpers.orderBy('createdAt', 'desc'),
-            window.firestoreHelpers.limit(50)
-        );
-        const snapshot = await window.firestoreHelpers.getDocs(q);
-        
-        const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        if (commentsCount) commentsCount.textContent = `(${comments.length})`;
-        
-        if (comments.length === 0) {
-            commentsList.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-comment-dots text-2xl text-gray-600 mb-2"></i>
-                    <p class="text-xs text-gray-500">Nenhum comentário ainda. Seja o primeiro!</p>
-                </div>`;
-            return;
-        }
-        
-        commentsList.innerHTML = comments.map(c => {
-            const isOwner = state.currentUser && c.userId === state.currentUser.uid;
-            return `
-            <div class="comment-item flex gap-2 p-2 rounded-lg">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">
-                    ${c.userPhoto ? `<img src="${c.userPhoto}" class="w-full h-full object-cover">` : (c.userName ? c.userName[0].toUpperCase() : 'U')}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-xs">${c.userName || 'Usuário'}</span>
-                        <span class="text-[10px] text-gray-500">${formatTimeAgo(c.createdAt?.toDate?.() || new Date(c.createdAt))}</span>
-                    </div>
-                    <p class="text-xs mt-1 break-words">${escapeHtml(c.text || '')}</p>
-                </div>
-            </div>
-        `}).join('');
-        
-    } catch (e) {
-        console.error('Erro no fallback:', e);
-    }
-}
 // =============================================
 // SISTEMA DE COMENTÁRIOS (PROJETO SEPARADO)
 // =============================================
@@ -3631,7 +3416,8 @@ async function loadComments() {
         
     } catch (e) {
         console.error('Erro ao carregar comentários:', e);
-        commentsList.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar comentários.</p>';
+        // Tenta fallback
+        await loadCommentsFallback();
     }
 }
 
@@ -3642,7 +3428,11 @@ async function postComment() {
     const textarea = document.getElementById('comment-text');
     const text = textarea.value.trim();
     
-    if (!text || text.length > 500) return;
+    if (!text) return;
+    if (text.length > 500) {
+        showToast('Máximo 500 caracteres.', 'error');
+        return;
+    }
     
     const btnPost = document.getElementById('btn-post-comment');
     btnPost.disabled = true;
@@ -3666,15 +3456,18 @@ async function postComment() {
         textarea.value = '';
         updateCommentCounter();
         showToast('Comentário adicionado!');
-        loadComments();
+        await loadComments();
         
     } catch (e) {
-        showToast('Erro ao comentar: ' + e.message, 'error');
+        console.error('Erro ao comentar:', e);
+        showToast('Erro ao comentar. Verifique sua conexão.', 'error');
     } finally {
         btnPost.disabled = false;
         btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
     }
 }
+
+
 
 // Editar comentário
 async function editCommentPrompt(commentId, currentText) {
