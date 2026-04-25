@@ -2337,18 +2337,23 @@ uploaderNameEl.innerHTML = `<span class="cursor-pointer hover:text-yt-brand tran
             };
 
             window.addEventListener('keydown', (e) => {
-                if (document.getElementById('page-player') && document.getElementById('page-player')
-                    .classList.contains('active')) {
-                    if (e.code === 'Space') { e.preventDefault();
-                        togglePlay(); }
-                    if (e.code === 'ArrowRight') skipTime(10);
-                    if (e.code === 'ArrowLeft') skipTime(-10);
-                    if (e.code === 'ArrowUp') { e.preventDefault();
-                        changeVolume(Math.min(1, (player.volume || 1) + 0.1)); }
-                    if (e.code === 'ArrowDown') { e.preventDefault();
-                        changeVolume(Math.max(0, (player.volume || 1) - 0.1)); }
-                }
-            });
+    // NÃO pausa se estiver digitando em um textarea/input
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) {
+        return; // Sai da função - não afeta o player
+    }
+    
+    if (document.getElementById('page-player') && document.getElementById('page-player')
+        .classList.contains('active')) {
+        if (e.code === 'Space') { e.preventDefault();
+            togglePlay(); }
+        if (e.code === 'ArrowRight') skipTime(10);
+        if (e.code === 'ArrowLeft') skipTime(-10);
+        if (e.code === 'ArrowUp') { e.preventDefault();
+            changeVolume(Math.min(1, (player.volume || 1) + 0.1)); }
+        if (e.code === 'ArrowDown') { e.preventDefault();
+            changeVolume(Math.max(0, (player.volume || 1) - 0.1)); }
+    }
+});
 
             // Eventos para auto-hide em fullscreen
             const container = document.getElementById('player-container');
@@ -3387,6 +3392,102 @@ function cancelComment() {
     updateCommentCounter();
 }
 
+// Inicializar área de comentário
+function setupCommentInput() {
+    const inputArea = document.getElementById('comment-input-area');
+    const loginPrompt = document.getElementById('comment-login-prompt');
+    const avatar = document.getElementById('comment-avatar');
+    
+    if (state.currentUser) {
+        if (inputArea) inputArea.classList.remove('hidden');
+        if (loginPrompt) loginPrompt.classList.add('hidden');
+        
+        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
+        if (avatar) {
+            avatar.innerHTML = photo 
+                ? `<img src="${photo}" class="w-full h-full object-cover">` 
+                : (state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U');
+        }
+        
+        const textarea = document.getElementById('comment-text');
+        if (textarea && !textarea._hasListener) {
+            textarea.addEventListener('input', updateCommentCounter);
+            textarea.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    e.stopPropagation(); // IMPEDE QUE O ESPAÇO PAUSE O VÍDEO
+                }
+            });
+            textarea._hasListener = true;
+        }
+    } else {
+        if (inputArea) inputArea.classList.add('hidden');
+        if (loginPrompt) loginPrompt.classList.remove('hidden');
+    }
+}
+
+// Atualizar contador de caracteres do comentário
+function updateCommentCounter() {
+    const textarea = document.getElementById('comment-text');
+    const counter = document.getElementById('comment-counter');
+    const btnPost = document.getElementById('btn-post-comment');
+    if (textarea && counter) {
+        counter.textContent = `${textarea.value.length}/500`;
+        if (btnPost) btnPost.disabled = textarea.value.trim().length === 0;
+    }
+}
+
+// Cancelar comentário
+function cancelComment() {
+    const textarea = document.getElementById('comment-text');
+    if (textarea) textarea.value = '';
+    updateCommentCounter();
+}
+
+// Postar comentário
+async function postComment() {
+    if (!state.currentUser || !state.currentVideoId) return;
+    
+    const textarea = document.getElementById('comment-text');
+    const text = textarea.value.trim();
+    
+    if (!text) return;
+    if (text.length > 500) {
+        showToast('Máximo 500 caracteres.', 'error');
+        return;
+    }
+    
+    const btnPost = document.getElementById('btn-post-comment');
+    btnPost.disabled = true;
+    btnPost.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
+    
+    try {
+        const commentsRef = window.firestoreHelpers.collection(
+            window.commentsDb, 'videos', state.currentVideoId, 'comments'
+        );
+        
+        await window.firestoreHelpers.addDoc(commentsRef, {
+            text: text,
+            userId: state.currentUser.uid,
+            userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
+            userPhoto: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+            likes: 0,
+            likedBy: [],
+            createdAt: window.firestoreHelpers.serverTimestamp()
+        });
+        
+        textarea.value = '';
+        updateCommentCounter();
+        showToast('Comentário adicionado!');
+        await loadComments();
+        
+    } catch (e) {
+        console.error('Erro ao comentar:', e);
+        showToast('Erro ao comentar: ' + e.message, 'error');
+    } finally {
+        btnPost.disabled = false;
+        btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
+    }
+}
 // =============================================
 // SISTEMA DE COMENTÁRIOS (PROJETO SEPARADO)
 // =============================================
