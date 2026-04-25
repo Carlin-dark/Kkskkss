@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
     <title>AnimeStream - Hub de Conteúdo</title>
     <script src="https://cdn.tailwindcss.com">
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="https://8upload.com/image/5c8d46ba70e7a43c/704b03e783c4d16b0d750843559e7353.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
@@ -726,7 +728,7 @@ a.hashtag-link:hover {
                                     </button>
                                 </div>
                             </div>
-                            <!-- Seção de Comentários -->
+<!-- Seção de Comentários -->
 <div id="comments-section" class="mt-4 p-4 bg-gray-100 dark:bg-yt-darkHover rounded-xl sm:rounded-2xl">
     <h3 class="font-bold text-sm mb-3 flex items-center gap-2">
         <i class="fas fa-comments text-yt-brand"></i> 
@@ -734,7 +736,7 @@ a.hashtag-link:hover {
         <span id="comments-count" class="text-gray-500 font-normal text-xs">(0)</span>
     </h3>
     
-    <!-- Input de comentário -->
+    <!-- Input de comentário (só aparece logado) -->
     <div id="comment-input-area" class="hidden mb-4">
         <div class="flex gap-2">
             <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden" id="comment-avatar">U</div>
@@ -754,7 +756,7 @@ a.hashtag-link:hover {
         </div>
     </div>
     
-    <!-- Botão para abrir input -->
+    <!-- Mensagem para não logados -->
     <div id="comment-login-prompt" class="text-center py-3">
         <p class="text-xs text-gray-500 mb-2">Faça login para comentar</p>
         <button onclick="navigateTo('auth')" class="text-yt-brand text-xs font-bold hover:underline">
@@ -902,28 +904,40 @@ a.hashtag-link:hover {
         </div>
     </div>
 
-    <!-- Modal Edit Video -->
-    <div id="modal-edit-video" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="fixed inset-0 modal-overlay" onclick="toggleEditModal(false)"></div>
-        <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
-            <div class="p-4 sm:p-6 border-b border-yt-lightBorder dark:border-yt-darkBorder flex justify-between items-center bg-white dark:bg-yt-dark sticky top-0">
-                <h2 class="text-lg sm:text-xl font-bold"><i class="fas fa-edit text-yt-brand"></i> Editar vídeo</h2>
-                <button onclick="toggleEditModal(false)" class="p-2 hover:bg-gray-200 dark:hover:bg-yt-darkHover rounded-full transition active:scale-90"><i class="fas fa-times text-lg"></i></button>
+<!-- Modal Edit Video -->
+<div id="modal-edit-video" class="fixed inset-0 z-[100] hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="fixed inset-0 modal-overlay" onclick="toggleEditModal(false)"></div>
+    <div class="bg-white dark:bg-yt-dark w-full sm:max-w-lg sm:rounded-2xl shadow-2xl z-10 overflow-hidden slide-up border-t sm:border border-yt-lightBorder dark:border-yt-darkBorder max-h-[85vh] sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-2xl">
+        <div class="p-4 sm:p-6 border-b border-yt-lightBorder dark:border-yt-darkBorder flex justify-between items-center bg-white dark:bg-yt-dark sticky top-0">
+            <h2 class="text-lg sm:text-xl font-bold"><i class="fas fa-edit text-yt-brand"></i> Editar vídeo</h2>
+            <button onclick="toggleEditModal(false)" class="p-2 hover:bg-gray-200 dark:hover:bg-yt-darkHover rounded-full transition active:scale-90"><i class="fas fa-times text-lg"></i></button>
+        </div>
+        <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5 bg-gray-50 dark:bg-[#1a1a1a]">
+            <input type="hidden" id="edit-video-id">
+            <div>
+                <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Título</label>
+                <input type="text" id="edit-title" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
             </div>
-            <div class="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-5 bg-gray-50 dark:bg-[#1a1a1a]">
-                <input type="hidden" id="edit-video-id">
-                <div>
-                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Título</label>
-                    <input type="text" id="edit-title" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
-                </div>
-                <div>
-    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
-        Descrição
-    </label>
-<textarea id="edit-desc" rows="3" maxlength="1500"
-    class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"
-    oninput="updateEditDescCounter()"></textarea>
-    <span id="edit-desc-counter" class="text-[10px] text-gray-400 mt-1 block text-right">0/1500</span>
+            <div>
+                <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Descrição</label>
+                <textarea id="edit-desc" rows="3" maxlength="1500"
+                    class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"
+                    oninput="updateEditDescCounter()"></textarea>
+                <span id="edit-desc-counter" class="text-[10px] text-gray-400 mt-1 block text-right">0/1500</span>
+            </div>
+            <div>
+                <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">Categorias</label>
+                <div class="flex flex-wrap gap-2" id="edit-categories"></div>
+            </div>
+        </div>
+        <div class="p-4 sm:p-5 bg-white dark:bg-yt-dark border-t border-yt-lightBorder dark:border-yt-darkBorder flex justify-between sticky bottom-0">
+            <button onclick="deleteVideo()" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm bg-red-500 text-white hover:bg-red-600 transition active:scale-95"><i class="fas fa-trash"></i> Excluir</button>
+            <div class="flex gap-2 sm:gap-3">
+                <button onclick="toggleEditModal(false)" class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-bold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-yt-darkHover transition active:scale-95">Cancelar</button>
+                <button onclick="saveEditVideo()" class="bg-yt-brand text-white font-bold px-6 sm:px-8 py-2 sm:py-2.5 rounded-full hover:brightness-110 transition active:scale-95 shadow-lg shadow-orange-500/20 text-xs sm:text-sm"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </div>
+    </div>
 </div>
             
 
@@ -3349,203 +3363,199 @@ async function toggleFollowChannel(uploaderId) {
 
 
 
-
-
 // =============================================
-// SISTEMA DE COMENTÁRIOS (PROJETO SEPARADO)
+// SISTEMA DE COMENTÁRIOS
 // =============================================
 
-async function loadComments() {
-    const commentsList = document.getElementById('comments-list');
-    const commentsCount = document.getElementById('comments-count');
-    if (!commentsList || !state.currentVideoId) return;
+function setupCommentInput() {
+    const inputArea = document.getElementById('comment-input-area');
+    const loginPrompt = document.getElementById('comment-login-prompt');
+    const avatar = document.getElementById('comment-avatar');
     
-    try {
-        const commentsRef = window.firestoreHelpers.collection(
-            window.commentsDb, 'videos', state.currentVideoId, 'comments'
-        );
-        const q = window.firestoreHelpers.query(
-            commentsRef,
-            window.firestoreHelpers.orderBy('createdAt', 'desc'),
-            window.firestoreHelpers.limit(50)
-        );
-        const snapshot = await window.firestoreHelpers.getDocs(q);
+    if (!inputArea) return;
+    
+    if (state.currentUser) {
+        inputArea.classList.remove('hidden');
+        if (loginPrompt) loginPrompt.classList.add('hidden');
         
-        const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        if (commentsCount) commentsCount.textContent = `(${comments.length})`;
-        
-        if (comments.length === 0) {
-            commentsList.innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fas fa-comment-dots text-2xl text-gray-600 mb-2"></i>
-                    <p class="text-xs text-gray-500">Nenhum comentário ainda. Seja o primeiro!</p>
-                </div>`;
-            return;
+        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
+        if (avatar) {
+            if (photo) {
+                avatar.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover">';
+            } else {
+                avatar.innerHTML = state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U';
+            }
         }
         
-        commentsList.innerHTML = comments.map(c => {
-            const isOwner = state.currentUser && c.userId === state.currentUser.uid;
-            return `
-            <div class="comment-item flex gap-2 p-2 rounded-lg">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">
-                    ${c.userPhoto ? `<img src="${c.userPhoto}" class="w-full h-full object-cover">` : (c.userName ? c.userName[0].toUpperCase() : 'U')}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold text-xs">${c.userName || 'Usuário'}</span>
-                        <span class="text-[10px] text-gray-500">${formatTimeAgo(c.createdAt?.toDate?.() || new Date(c.createdAt))}</span>
-                    </div>
-                    <p class="text-xs mt-1 break-words" id="comment-text-${c.id}">${escapeHtml(c.text || '')}</p>
-                    <div class="flex items-center gap-3 mt-1">
-                        <button onclick="toggleCommentLike('${c.id}')" class="text-[10px] text-gray-500 hover:text-red-500 transition flex items-center gap-1 ${c.likedBy?.includes(state.currentUser?.uid) ? 'text-red-500' : ''}">
-                            <i class="fas fa-heart text-[9px]"></i> <span id="comment-likes-${c.id}">${c.likes || 0}</span>
-                        </button>
-                        ${isOwner ? `
-                            <button onclick="editCommentPrompt('${c.id}', '${escapeHtml(c.text || '').replace(/'/g, "\\'")}')" class="text-[10px] text-gray-500 hover:text-yt-brand transition">
-                                <i class="fas fa-edit"></i> Editar
-                            </button>
-                            <button onclick="deleteComment('${c.id}')" class="text-[10px] text-gray-500 hover:text-red-500 transition">
-                                <i class="fas fa-trash"></i> Apagar
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `}).join('');
-        
-    } catch (e) {
-        console.error('Erro ao carregar comentários:', e);
-        // Tenta fallback
-        await loadCommentsFallback();
+        const textarea = document.getElementById('comment-text');
+        if (textarea && !textarea._hasCommentListener) {
+            textarea.addEventListener('input', function() {
+                const counter = document.getElementById('comment-counter');
+                const btn = document.getElementById('btn-post-comment');
+                const len = textarea.value.length;
+                if (counter) counter.textContent = len + '/500';
+                if (btn) btn.disabled = len === 0;
+            });
+            textarea.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') e.stopPropagation();
+            });
+            textarea._hasCommentListener = true;
+        }
+    } else {
+        inputArea.classList.add('hidden');
+        if (loginPrompt) loginPrompt.classList.remove('hidden');
     }
 }
 
-// Postar comentário
+function cancelComment() {
+    const textarea = document.getElementById('comment-text');
+    if (textarea) {
+        textarea.value = '';
+        document.getElementById('comment-counter').textContent = '0/500';
+        document.getElementById('btn-post-comment').disabled = true;
+    }
+}
+
+async function loadComments() {
+    const list = document.getElementById('comments-list');
+    const count = document.getElementById('comments-count');
+    if (!list || !state.currentVideoId) return;
+    
+    try {
+        const ref = collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        const q = query(ref, orderBy('createdAt', 'desc'), limit(50));
+        const snap = await getDocs(q);
+        const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        
+        if (count) count.textContent = '(' + comments.length + ')';
+        
+        if (comments.length === 0) {
+            list.innerHTML = '<div class="text-center py-4"><p class="text-xs text-gray-500">Nenhum comentário ainda.</p></div>';
+            return;
+        }
+        
+        list.innerHTML = comments.map(c => {
+            const isOwner = state.currentUser && c.userId === state.currentUser.uid;
+            let timeStr = '';
+            try {
+                const time = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt || Date.now());
+                timeStr = formatTimeAgo(time);
+            } catch(e) { timeStr = 'agora'; }
+            
+            // Botões de interação só aparecem se estiver logado
+            const actionButtons = state.currentUser ? `
+                <div class="flex items-center gap-3 mt-1">
+                    <button onclick="toggleCommentLike('${c.id}')" class="text-[10px] ${(c.likedBy || []).includes(state.currentUser.uid) ? 'text-red-500' : 'text-gray-500'} hover:text-red-500 transition">
+                        <i class="fas fa-heart text-[9px]"></i> ${c.likes || 0}
+                    </button>
+                    ${isOwner ? '<button onclick="deleteComment(\'' + c.id + '\')" class="text-[10px] text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>' : ''}
+                </div>` : `
+                <div class="flex items-center gap-3 mt-1">
+                    <span class="text-[10px] text-gray-500"><i class="fas fa-heart text-[9px]"></i> ${c.likes || 0}</span>
+                </div>`;
+            
+            return '<div class="flex gap-2 p-2 rounded-lg">' +
+                '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">' +
+                    (c.userPhoto ? '<img src="' + c.userPhoto + '" class="w-full h-full object-cover">' : (c.userName || 'U')[0].toUpperCase()) +
+                '</div>' +
+                '<div class="flex-1 min-w-0">' +
+                    '<div class="flex items-center gap-2">' +
+                        '<span class="font-bold text-xs">' + (c.userName || 'Usuário') + '</span>' +
+                        '<span class="text-[10px] text-gray-500">' + timeStr + '</span>' +
+                    '</div>' +
+                    '<p class="text-xs mt-1 break-words">' + (c.text || '') + '</p>' +
+                    actionButtons +
+                '</div>' +
+            '</div>';
+        }).join('');
+        
+    } catch (e) {
+        console.error('Erro ao carregar comentários:', e);
+        list.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar comentários.</p>';
+    }
+}
+
 async function postComment() {
-    if (!state.currentUser || !state.currentVideoId) return;
+    if (!state.currentUser || !state.currentVideoId) {
+        showToast('Faça login para comentar.', 'error');
+        return;
+    }
     
     const textarea = document.getElementById('comment-text');
-    const text = textarea.value.trim();
+    if (!textarea) return;
     
+    const text = textarea.value.trim();
     if (!text) return;
     if (text.length > 500) {
         showToast('Máximo 500 caracteres.', 'error');
         return;
     }
     
-    const btnPost = document.getElementById('btn-post-comment');
-    btnPost.disabled = true;
-    btnPost.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...';
+    const btn = document.getElementById('btn-post-comment');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>'; }
     
     try {
-        const commentsRef = window.firestoreHelpers.collection(
-            window.commentsDb, 'videos', state.currentVideoId, 'comments'
-        );
-        
-        await window.firestoreHelpers.addDoc(commentsRef, {
+        const ref = collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        await addDoc(ref, {
             text: text,
             userId: state.currentUser.uid,
             userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
-            userPhoto: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+            userPhoto: state.userProfile?.photoURL || '',
             likes: 0,
             likedBy: [],
-            createdAt: window.firestoreHelpers.serverTimestamp()
+            createdAt: serverTimestamp()
         });
         
         textarea.value = '';
-        updateCommentCounter();
+        document.getElementById('comment-counter').textContent = '0/500';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; }
         showToast('Comentário adicionado!');
-        await loadComments();
+        loadComments();
         
     } catch (e) {
         console.error('Erro ao comentar:', e);
-        showToast('Erro ao comentar. Verifique sua conexão.', 'error');
-    } finally {
-        btnPost.disabled = false;
-        btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
+        showToast('Erro ao comentar. Tente novamente.', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; }
     }
 }
 
-
-
-// Editar comentário
-async function editCommentPrompt(commentId, currentText) {
-    const newText = prompt('Editar comentário:', currentText);
-    if (!newText || newText.trim() === '' || newText === currentText) return;
-    if (newText.length > 500) return showToast('Máximo 500 caracteres.', 'error');
-    
-    try {
-        await window.firestoreHelpers.updateDoc(
-            window.firestoreHelpers.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId),
-            { text: newText.trim() }
-        );
-        showToast('Comentário editado!');
-        loadComments();
-    } catch (e) {
-        showToast('Erro ao editar.', 'error');
-    }
-}
-
-// Deletar comentário
 async function deleteComment(commentId) {
-    if (!confirm('Excluir este comentário?')) return;
-    
+    if (!confirm('Excluir comentário?')) return;
     try {
-        await window.firestoreHelpers.deleteDoc(
-            window.firestoreHelpers.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId)
-        );
-        showToast('Comentário excluído.');
+        await deleteDoc(doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId));
+        showToast('Excluído!');
         loadComments();
     } catch (e) {
-        showToast('Erro ao excluir.', 'error');
+        showToast('Erro ao excluir', 'error');
     }
 }
 
-// Curtir comentário
 async function toggleCommentLike(commentId) {
-    if (!state.currentUser) return;
-    
-    try {
-        const commentRef = window.firestoreHelpers.doc(
-            window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId
-        );
-        const commentSnap = await window.firestoreHelpers.getDoc(commentRef);
-        
-        if (!commentSnap.exists()) return;
-        
-        const data = commentSnap.data();
-        const likedBy = data.likedBy || [];
-        
-        if (likedBy.includes(state.currentUser.uid)) {
-            await window.firestoreHelpers.updateDoc(commentRef, {
-                likes: window.firestoreHelpers.increment(-1),
-                likedBy: window.firestoreHelpers.arrayRemove(state.currentUser.uid)
-            });
-        } else {
-            await window.firestoreHelpers.updateDoc(commentRef, {
-                likes: window.firestoreHelpers.increment(1),
-                likedBy: window.firestoreHelpers.arrayUnion(state.currentUser.uid)
-            });
-        }
-        
-        loadComments();
-    } catch (e) {
-        console.error('Erro ao curtir:', e);
+    if (!state.currentUser) {
+        showToast('Faça login para curtir.', 'info');
+        return;
     }
+    try {
+        const ref = doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+        const data = snap.data();
+        if ((data.likedBy || []).includes(state.currentUser.uid)) {
+            await updateDoc(ref, { likes: increment(-1), likedBy: arrayRemove(state.currentUser.uid) });
+        } else {
+            await updateDoc(ref, { likes: increment(1), likedBy: arrayUnion(state.currentUser.uid) });
+        }
+        loadComments();
+    } catch (e) { console.error(e); }
 }
 
-// Formatar tempo relativo
 function formatTimeAgo(date) {
     if (!date) return '';
-    const now = new Date();
-    const diff = Math.floor((now - date) / 1000);
-    
+    const diff = Math.floor((Date.now() - date.getTime()) / 1000);
     if (diff < 60) return 'agora';
-    if (diff < 3600) return `há ${Math.floor(diff / 60)} min`;
-    if (diff < 86400) return `há ${Math.floor(diff / 3600)} h`;
-    if (diff < 2592000) return `há ${Math.floor(diff / 86400)} d`;
-    if (diff < 31536000) return `há ${Math.floor(diff / 2592000)} m`;
+    if (diff < 3600) return 'há ' + Math.floor(diff/60) + ' min';
+    if (diff < 86400) return 'há ' + Math.floor(diff/3600) + ' h';
+    if (diff < 2592000) return 'há ' + Math.floor(diff/86400) + ' d';
     return date.toLocaleDateString('pt-BR');
 }
         // Inicialização
