@@ -8,6 +8,7 @@
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="icon" type="image/png" href="https://8upload.com/image/5c8d46ba70e7a43c/704b03e783c4d16b0d750843559e7353.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
@@ -49,356 +50,456 @@
     </script>
 
     <style>
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #6b7280;
-            border-radius: 3px;
-        }
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
 
-        .hide-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .hide-scroll::-webkit-scrollbar {
-            display: none;
-        }
+.hide-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+.hide-scroll::-webkit-scrollbar {
+    display: none;
+}
 
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+.fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-        .slide-up {
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+@keyframes modalSlideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.slide-up {
+    animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
-        .footer-hidden {
-            display: none !important;
-        }
+.footer-hidden {
+    display: none !important;
+}
 
-        .modal-overlay {
-            background-color: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-        }
+/* Overlay dos modais */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
 
-        .category-checkbox:checked+label {
-            background-color: #f97316;
-            color: white;
-            border-color: #f97316;
-        }
+/* Checkbox de categorias */
+.category-checkbox:checked+label {
+    background-color: #f97316;
+    color: white;
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px #f97316, 0 0 0 4px rgba(0,0,0,0.3);
+}
 
-        .video-thumbnail {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .video-thumbnail-img {
-            object-fit: cover;
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+/* Thumbnails */
+.video-thumbnail {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+.video-thumbnail-img {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
 
-        .video-player-container {
-            position: relative;
-            width: 100%;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-        }
+/* Card de vídeo com efeito de vidro e brilho */
+.video-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    will-change: transform;
+    border: 1px solid transparent;
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.video-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 40px -15px rgba(249,115,22,0.3);
+    border-color: rgba(249,115,22,0.5);
+}
 
-        .custom-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8) 40%, rgba(0, 0, 0, 0.95));
-            padding: 40px 12px 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
-            z-index: 5;
-        }
+/* Player container com sombra e borda */
+.video-player-container {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.7);
+}
 
-        .video-player-container:hover .custom-controls,
-        .custom-controls.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
-        .custom-controls.force-hidden {
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
+/* Controles do player com gradiente mais intenso */
+.custom-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 60%, transparent 100%);
+    padding: 40px 12px 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 5;
+}
 
-        .progress-container {
-            width: 100%;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-            cursor: pointer;
-            margin-bottom: 8px;
-            transition: height 0.2s;
-        }
-        .progress-container:hover {
-            height: 5px;
-        }
+.video-player-container:hover .custom-controls,
+.custom-controls.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+.custom-controls.force-hidden {
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
 
-        .progress-bar {
-            height: 100%;
-            background: #f97316;
-            border-radius: 2px;
-            transition: width 0.1s linear;
-        }
+/* Barra de progresso com brilho */
+.progress-container {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    transition: height 0.2s;
+    position: relative;
+}
+.progress-container:hover {
+    height: 6px;
+}
 
-        .control-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 36px;
-            min-height: 36px;
-        }
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #f97316, #ffa500);
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    position: relative;
+    box-shadow: 0 0 10px rgba(249,115,22,0.6);
+}
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #f97316;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(249,115,22,0.8);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+.progress-container:hover .progress-bar::after {
+    opacity: 1;
+}
 
-        @media (max-width: 640px) {
-            .video-player-container {
-                border-radius: 0;
-                margin: -16px -16px 16px;
-                width: calc(100% + 32px);
-            }
-        }
+.control-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 12px;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+}
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.08);
+}
 
-        .page {
-            display: none;
-        }
-        .page.active {
-            display: block;
-        }
+@media (max-width: 640px) {
+    .video-player-container {
+        border-radius: 0;
+        margin: -16px -16px 16px;
+        width: calc(100% + 32px);
+    }
+}
 
-        .auth-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e5e5e5;
-            border-radius: 12px;
-            outline: none;
-            transition: border-color 0.3s;
-            font-size: 14px;
-        }
-        .dark .auth-input {
-            background: #272727;
-            border-color: #3f3f3f;
-            color: white;
-        }
-        .auth-input:focus {
-            border-color: #f97316;
-        }
+.page {
+    display: none;
+}
+.page.active {
+    display: block;
+}
 
-        .google-btn {
-            background: white;
-            color: #374151;
-            border: 1px solid #e5e5e5;
-            transition: all 0.2s;
-        }
-        .dark .google-btn {
-            background: #ffffff;
-            color: #1f2937;
-            border: none;
-        }
-        .google-btn:hover {
-            background: #f9fafb;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
+.auth-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #374151;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-size: 14px;
+    background: rgba(255,255,255,0.05);
+    color: white;
+}
+.auth-input:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 10px rgba(249,115,22,0.3);
+}
 
-        /* ===== FALLBACK TEMA ESCURO ===== */
-        body,
-        .bg-yt-light,
-        .bg-yt-dark,
-        nav,
-        aside,
-        main,
-        footer,
-        .modal-upload,
-        .modal-edit-video,
-        .modal-report,
-        .modal-edit-profile,
-        .bg-white,
-        .bg-gray-100,
-        .bg-gray-50,
-        .dark\:bg-yt-darkHover,
-        .dark\:bg-yt-darkBorder,
-        .dark\:bg-yt-dark {
-            background-color: #0f0f0f !important;
-            color: #f1f5f9 !important;
-        }
+.google-btn {
+    background: white;
+    color: #374151;
+    border: 1px solid #e5e5e5;
+    transition: all 0.2s;
+}
+.dark .google-btn {
+    background: #ffffff;
+    color: #1f2937;
+    border: none;
+}
+.google-btn:hover {
+    background: #f9fafb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
 
-        .auth-input,
-        .google-btn,
-        .chip,
-        .category-checkbox+label {
-            background-color: #1e1e1e !important;
-            color: #e5e5e5 !important;
-            border-color: #3f3f3f !important;
-        }
+/* ===== TEMA ESCURO (Fallback) ===== */
+body,
+.bg-yt-light,
+.bg-yt-dark,
+nav,
+aside,
+main,
+footer,
+.modal-upload,
+.modal-edit-video,
+.modal-report,
+.modal-edit-profile,
+.bg-white,
+.bg-gray-100,
+.bg-gray-50,
+.dark\:bg-yt-darkHover,
+.dark\:bg-yt-darkBorder,
+.dark\:bg-yt-dark {
+    background-color: #0a0a0a !important;
+    color: #f1f5f9 !important;
+}
 
-        .google-btn:hover {
-            background-color: #ffffff !important;
-            color: #1f2937 !important;
-        }
+.auth-input,
+.google-btn,
+.chip,
+.category-checkbox+label {
+    background-color: #1a1a1a !important;
+    color: #e5e5e5 !important;
+    border-color: #2a2a2a !important;
+}
 
-        a,
-        button:not(.bg-yt-brand):not(.bg-red-500) {
-            color: #e5e5e5 !important;
-        }
-        a:hover,
-        button:hover {
-            color: #f97316 !important;
-        }
+.google-btn:hover {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
 
-        .bg-white,
-        .bg-gray-100,
-        .bg-gray-50 {
-            background-color: #272727 !important;
-        }
-        .dark\:bg-yt-darkHover {
-            background-color: #272727 !important;
-        }
+a,
+button:not(.bg-yt-brand):not(.bg-red-500) {
+    color: #e5e5e5 !important;
+}
+a:hover,
+button:hover {
+    color: #f97316 !important;
+}
 
-        .modal-upload .bg-white,
-        .modal-edit-video .bg-white,
-        .modal-report .bg-white,
-        .modal-edit-profile .bg-white {
-            background-color: #1a1a1a !important;
-        }
-        .modal-upload .bg-gray-50,
-        .modal-edit-video .bg-gray-50 {
-            background-color: #0f0f0f !important;
-        }
+.bg-white,
+.bg-gray-100,
+.bg-gray-50 {
+    background-color: #1e1e1e !important;
+}
+.dark\:bg-yt-darkHover {
+    background-color: #1e1e1e !important;
+}
 
-        .bg-yt-brand {
-            background-color: #f97316 !important;
-            color: white !important;
-        }
-        .bg-red-500 {
-            background-color: #ef4444 !important;
-            color: white !important;
-        }
+.modal-upload .bg-white,
+.modal-edit-video .bg-white,
+.modal-report .bg-white,
+.modal-edit-profile .bg-white {
+    background-color: #141414 !important;
+}
+.modal-upload .bg-gray-50,
+.modal-edit-video .bg-gray-50 {
+    background-color: #0a0a0a !important;
+}
 
-        /* Placeholder thumbnail rápido */
-        .thumb-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-        }
-        .thumb-placeholder .play-icon-circle {
-            width: 48px;
-            height: 48px;
-            background: rgba(249, 115, 22, 0.85);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.5);
-            transition: transform 0.3s;
-        }
-        .group:hover .thumb-placeholder .play-icon-circle {
-            transform: scale(1.15);
-        }
-        .thumb-placeholder .play-icon-circle i {
-            color: white;
-            font-size: 18px;
-            margin-left: 2px;
-        }
+.bg-yt-brand {
+    background-color: #f97316 !important;
+    color: white !important;
+}
+.bg-red-500 {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
 
-        /* Playlist na página do player */
-        .playlist-item-active {
-            border-left: 3px solid #f97316;
-            background: rgba(249, 115, 22, 0.1);
-        }
+/* Placeholder thumbnail */
+.thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.thumb-placeholder .play-icon-circle {
+    width: 48px;
+    height: 48px;
+    background: rgba(249, 115, 22, 0.85);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(249, 115, 22, 0.7);
+    transition: transform 0.3s;
+    animation: pulse-soft 2s infinite;
+}
+@keyframes pulse-soft {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+.group:hover .thumb-placeholder .play-icon-circle {
+    transform: scale(1.15);
+}
+.thumb-placeholder .play-icon-circle i {
+    color: white;
+    font-size: 18px;
+    margin-left: 2px;
+}
 
-        /* Mini-player */
-        .mini-player {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 320px;
-            height: 180px;
-            z-index: 55;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-            display: none;
-            background: #000;
-        }
-        .mini-player.active {
-            display: block;
-        }
-        .mini-player video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            background: #000;
-        }
-        .mini-player .close-mini {
-            position: absolute;
-            top: 4px;
-            right: 4px;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            font-size: 12px;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+/* Playlist ativa */
+.playlist-item-active {
+    border-left: 3px solid #f97316;
+    background: rgba(249, 115, 22, 0.1);
+    transition: transform 0.2s;
+}
+.playlist-item-active:hover {
+    transform: scale(1.02);
+}
+
+/* Mini-player */
+.mini-player {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 320px;
+    height: 180px;
+    z-index: 55;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+    display: none;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.mini-player.active {
+    display: block;
+}
+.mini-player video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+}
+.mini-player .close-mini {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 12px;
+    z-index: 2;
+}
+
+/* Sidebar ativo */
+#sidebar a.active-link {
+    background: rgba(249, 115, 22, 0.2);
+    color: #f97316;
+    font-weight: 600;
+    border-left: 3px solid #f97316;
+}
+
+/* Footer mobile com efeito de vidro */
+#app-footer {
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    background: rgba(10, 10, 10, 0.8);
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.7);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Toast com borda colorida */
+#toast {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(0,0,0,0.9);
+    border: 1px solid rgba(249,115,22,0.4);
+}
+
+/* Logo com gradiente animado (opcional) */
+.logo-text {
+    background: linear-gradient(90deg, #f97316, #ffa500, #f97316);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+}
+@keyframes shine {
+    to { background-position: 200% center; }
+}
+
+#sidebar {
+    background: rgba(15, 15, 15, 0.7) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* Badge "Novo" para vídeos recentes */
+.badge-new {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #f97316;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 20px;
+    z-index: 2;
+    box-shadow: 0 2px 10px rgba(249,115,22,0.5);
+}
     </style>
 </head>
-<body class="bg-yt-light dark:bg-yt-dark text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300 overflow-x-hidden">
+<body class="bg-yt-light dark:bg-yt-dark text-gray-900 dark:text-gray-100 font-['Inter'] transition-colors duration-300 overflow-x-hidden">
 
     <nav class="fixed top-0 left-0 right-0 h-14 sm:h-16 bg-yt-light/95 dark:bg-yt-dark/95 backdrop-blur-md border-b border-yt-lightBorder dark:border-yt-darkBorder flex items-center justify-between px-3 sm:px-4 z-50">
         <div class="flex items-center gap-2 sm:gap-4">
@@ -646,10 +747,15 @@
                         <input type="text" id="up-title" placeholder="Adicione um título descritivo" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição</label>
-                    <textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
-                </div>
+<div>
+    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+        <i class="fas fa-align-left text-yt-brand mr-1"></i> Descrição
+    </label>
+<textarea id="up-desc" placeholder="Conte mais sobre seu vídeo..." rows="3" maxlength="1500"
+    class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"
+    oninput="updateUpDescCounter()"></textarea>
+    <span id="up-desc-counter" class="text-[10px] text-gray-400 mt-1 block text-right">0/1500</span>
+</div>
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider"><i class="fas fa-list text-yt-brand mr-1"></i> Playlist (opcional)</label>
                     <input type="text" id="up-playlist" placeholder="Nome da playlist para adicionar este vídeo" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
@@ -693,9 +799,14 @@
                     <input type="text" id="edit-title" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition">
                 </div>
                 <div>
-                    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Descrição</label>
-                    <textarea id="edit-desc" rows="3" class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"></textarea>
-                </div>
+    <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5 uppercase tracking-wider">
+        Descrição
+    </label>
+<textarea id="edit-desc" rows="3" maxlength="1500"
+    class="w-full bg-white dark:bg-yt-darkHover border border-yt-lightBorder dark:border-yt-darkBorder rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm outline-none focus:border-yt-brand focus:ring-2 focus:ring-orange-500/20 transition resize-none"
+    oninput="updateEditDescCounter()"></textarea>
+    <span id="edit-desc-counter" class="text-[10px] text-gray-400 mt-1 block text-right">0/1500</span>
+</div>
                 <div>
                     <label class="block text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wider">Categorias</label>
                     <div class="flex flex-wrap gap-2" id="edit-categories"></div>
@@ -805,6 +916,7 @@
             likedVideos: [],
             dislikedVideos: [],
             userProfile: null,
+            idleTimeout: null,
             theaterMode: false,
             miniPlayerActive: false,
             subtitleActive: false,
@@ -823,6 +935,18 @@
             observedDurationElements: new Set(),
             durationObserver: null
         };
+        
+        // Função para atualizar visualmente o link ativo na sidebar
+function updateActiveSidebarLink(page) {
+    document.querySelectorAll('#sidebar a[data-page]').forEach(link => {
+        if (link.getAttribute('data-page') === page || 
+            (page === 'home' && link.getAttribute('data-page') === 'home')) {
+            link.classList.add('active-link');
+        } else {
+            link.classList.remove('active-link');
+        }
+    });
+}
 
         // =============================================
         // INICIALIZAÇÃO
@@ -836,7 +960,9 @@
             setupPlayerListeners();
             setupDurationObserver();
             setupFullscreenDetection();
+            setupPlayerIdleDetection();
             setupMiniPlayerSync();
+            document.getElementById('player-desc').addEventListener('click', handleDescriptionClick);
         }
 
         function silenceVideoAbortErrors() {
@@ -1357,26 +1483,29 @@
         // NAVEGAÇÃO SPA
         // =============================================
         function navigateTo(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const pageEl = document.getElementById(`page-${pageId}`);
-            if (pageEl) pageEl.classList.add('active');
-            window.scrollTo(0, 0);
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pageEl = document.getElementById(`page-${pageId}`);
+    if (pageEl) pageEl.classList.add('active');
+    window.scrollTo(0, 0);
 
-            if (pageId !== 'player') {
-                const player = document.getElementById('html-player');
-                if (player && !state.miniPlayerActive) {
-                    player.pause();
-                    state.isPlaying = false;
-                    updatePlayButton();
-                }
-            }
-
-            if (pageId === 'auth') renderAuthPage();
-            if (pageId === 'profile') renderProfile();
-            if (pageId === 'trending') renderTrending();
-
-            window.location.hash = pageId === 'player' ? `player/${state.currentVideoId}` : pageId;
+    if (pageId !== 'player') {
+        const player = document.getElementById('html-player');
+        if (player && !state.miniPlayerActive) {
+            player.pause();
+            state.isPlaying = false;
+            updatePlayButton();
         }
+    }
+
+    if (pageId === 'auth') renderAuthPage();
+    if (pageId === 'profile') renderProfile();
+    if (pageId === 'trending') renderTrending();
+
+    // Destacar link ativo na sidebar
+    updateActiveSidebarLink(pageId);
+
+    window.location.hash = pageId === 'player' ? `player/${state.currentVideoId}` : pageId;
+}
 
         // =============================================
         // CATEGORIAS
@@ -1414,11 +1543,14 @@
         }
 
         function filterCategory(catId) {
-            state.selectedCategory = catId;
-            renderCategories();
-            renderVideoGrid();
-            navigateTo('home');
-        }
+    state.selectedCategory = catId;
+    renderCategories();
+    renderVideoGrid();
+    navigateTo('home');
+    // Remove destaque de todos os links de categoria da sidebar (não interfere nos links principais)
+    document.querySelectorAll('#sidebar-categories a').forEach(a => a.classList.remove('active-link'));
+    // Opcional: pode adicionar destaque ao item de categoria clicado, mas não implementamos para não conflitar com os links principais.
+}
 
         // =============================================
         // VÍDEOS (com thumbnails rápidos e lazy loading)
@@ -1443,59 +1575,61 @@
         }
 
         function renderVideoGrid() {
-            const grid = document.getElementById('video-grid');
-            const noResults = document.getElementById('no-results');
-            if (!grid) return;
+    const grid = document.getElementById('video-grid');
+    const noResults = document.getElementById('no-results');
+    if (!grid) return;
 
-            let filtered = state.allVideos;
-            if (state.selectedCategory !== 'all') {
-                filtered = filtered.filter(v => v.categories && v.categories.includes(state.selectedCategory));
-            }
-            if (state.currentSearch) {
-                const s = state.currentSearch.toLowerCase();
-                filtered = filtered.filter(v => v.title.toLowerCase().includes(s) || (v.description && v
-                    .description.toLowerCase().includes(s)));
-            }
+    let filtered = state.allVideos;
+    if (state.selectedCategory !== 'all') {
+        filtered = filtered.filter(v => v.categories && v.categories.includes(state.selectedCategory));
+    }
+    if (state.currentSearch) {
+        const s = state.currentSearch.toLowerCase();
+        filtered = filtered.filter(v => v.title.toLowerCase().includes(s) || (v.description && v.description.toLowerCase().includes(s)));
+    }
 
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                if (noResults) noResults.classList.remove('hidden');
-                return;
-            }
+    if (filtered.length === 0) {
+        grid.innerHTML = '';
+        if (noResults) noResults.classList.remove('hidden');
+        return;
+    }
 
-            if (noResults) noResults.classList.add('hidden');
-            grid.innerHTML = filtered.map(v => {
-                const uploaderPhoto = v.uploaderPhotoURL || '';
-                const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
-                return `
-                <div class="group cursor-pointer fade-in" onclick="openVideo('${v.id}')">
-                    <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-xl overflow-hidden mb-3 shadow-sm group-hover:shadow-md transition-all duration-300">
-                        ${getThumbnailHTML(v)}
-                        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                            <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl drop-shadow-lg"></i>
-                        </div>
-                        <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded" id="duration-${v.id}" data-video-id="${v.id}">
-                            <i class="fas fa-clock mr-1"></i>
-                        </div>
-                    </div>
-                    <div class="flex gap-3">
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden">
-                            ${uploaderPhoto ? `<img src="${uploaderPhoto}" class="w-full h-full object-cover" loading="lazy">` : initial}
-                        </div>
-                        <div class="min-w-0">
-                            <h3 class="font-bold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-yt-brand transition-colors mb-1">${v.title}</h3>
-                            <p class="text-xs text-gray-500 font-medium truncate">${v.uploaderName || 'Uploader'}</p>
-                            <p class="text-[11px] text-gray-400 mt-0.5">${v.views || 0} visualizações • ${formatDate(v.createdAt)}</p>
-                        </div>
-                    </div>
+    if (noResults) noResults.classList.add('hidden');
+    grid.innerHTML = filtered.map(v => {
+        const uploaderPhoto = v.uploaderPhotoURL || '';
+        const initial = v.uploaderName ? v.uploaderName[0].toUpperCase() : 'U';
+        // Alterado para 24 horas
+        const isNew = v.createdAt && (Date.now() - v.createdAt.toDate().getTime()) < 24 * 60 * 60 * 1000;
+        return `
+        <div class="group cursor-pointer fade-in video-card rounded-2xl overflow-hidden bg-transparent" onclick="openVideo('${v.id}')">
+            <div class="relative aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-xl overflow-hidden mb-3 shadow-sm transition-all duration-300">
+                ${getThumbnailHTML(v)}
+                ${isNew ? '<div class="badge-new">Novo</div>' : ''}
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <i class="fas fa-play text-white opacity-0 group-hover:opacity-100 transition-opacity text-2xl drop-shadow-lg"></i>
                 </div>
-                `;
-            }).join('');
+                <div class="absolute bottom-2 right-2 bg-black/80 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md" id="duration-${v.id}" data-video-id="${v.id}">
+                    <i class="fas fa-clock mr-1"></i>
+                </div>
+            </div>
+            <div class="flex gap-3 px-1">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-inner overflow-hidden ring-2 ring-white/10">
+                    ${uploaderPhoto ? `<img src="${uploaderPhoto}" class="w-full h-full object-cover" loading="lazy">` : initial}
+                </div>
+                <div class="min-w-0">
+                    <h3 class="font-bold text-sm sm:text-base leading-snug line-clamp-2 group-hover:text-yt-brand transition-colors mb-1">${v.title}</h3>
+                    <p class="text-xs text-gray-400 font-medium truncate">${v.uploaderName || 'Uploader'}</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">${v.views || 0} visualizações • ${formatDate(v.createdAt)}</p>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
 
-            requestAnimationFrame(() => {
-                observeDurationElements();
-            });
-        }
+    requestAnimationFrame(() => {
+        observeDurationElements();
+    });
+}
 
         function renderTrending() {
             const grid = document.getElementById('trending-grid');
@@ -1529,7 +1663,7 @@
                 player.querySelectorAll('track').forEach(t => t.remove());
                 player.src = video.url;
                 document.getElementById('player-title').innerText = video.title;
-                document.getElementById('player-desc').innerText = video.description || 'Sem descrição.';
+                document.getElementById('player-desc').innerHTML = processDescription(video.description) || '<span class="text-gray-500">Sem descrição.</span>';
                 document.getElementById('player-uploader-name').innerText = video.uploaderName || 'Uploader';
                 document.getElementById('likes-count').innerText = video.likes || 0;
                 document.getElementById('dislikes-count').innerText = video.dislikes || 0;
@@ -1563,6 +1697,7 @@
                 updatePlayButton();
                 showControls();
                 state.controlsVisible = true;
+                resetIdleTimer();
             }
         }
 
@@ -1623,29 +1758,49 @@
         }
 
         function loadRecommended() {
-            const list = document.getElementById('recommended-list');
-            if (!list) return;
-            const recs = state.allVideos.filter(v => v.id !== state.currentVideoId).slice(0, 10);
-            list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => {
-                return `
-                <div class="flex gap-3 mb-4 cursor-pointer group" onclick="openVideo('${v.id}')">
-                    <div class="w-40 aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden flex-shrink-0 relative">
-                        ${getThumbnailHTML(v)}
-                        <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}" data-video-id="${v.id}"></div>
-                    </div>
-                    <div class="min-w-0">
-                        <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-yt-brand transition-colors">${v.title}</h4>
-                        <p class="text-[11px] text-gray-500 mt-1">${v.uploaderName || 'Uploader'}</p>
-                        <p class="text-[10px] text-gray-400">${v.views || 0} visualizações</p>
-                    </div>
-                </div>
-                `;
-            }).join('');
+    const list = document.getElementById('recommended-list');
+    if (!list) return;
+    const currentVideo = state.currentVideoData;
+    let recs = [];
+    if (currentVideo && currentVideo.categories) {
+        // Primeiro, vídeos com categorias em comum (excluindo o atual)
+        const common = state.allVideos.filter(v => 
+            v.id !== state.currentVideoId && 
+            v.categories.some(cat => currentVideo.categories.includes(cat))
+        );
+        // Depois, o restante
+        const others = state.allVideos.filter(v => 
+            v.id !== state.currentVideoId && 
+            !v.categories.some(cat => currentVideo.categories.includes(cat))
+        );
+        // Embaralhar levemente para não ser sempre a mesma ordem
+        common.sort(() => Math.random() - 0.5);
+        others.sort(() => Math.random() - 0.5);
+        recs = [...common, ...others].slice(0, 10);
+    } else {
+        // Sem categorias, apenas os últimos 10
+        recs = state.allVideos.filter(v => v.id !== state.currentVideoId).slice(0, 10);
+    }
+    list.innerHTML = `<h3 class="font-bold mb-4 px-3 sm:px-0">Recomendados</h3>` + recs.map(v => {
+        return `
+        <div class="flex gap-3 mb-4 cursor-pointer group" onclick="openVideo('${v.id}')">
+            <div class="w-40 aspect-video bg-gray-200 dark:bg-yt-darkHover rounded-lg overflow-hidden flex-shrink-0 relative">
+                ${getThumbnailHTML(v)}
+                <div class="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] px-1 py-0.5 rounded" id="rec-duration-${v.id}" data-video-id="${v.id}"></div>
+            </div>
+            <div class="min-w-0">
+                <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-yt-brand transition-colors">${v.title}</h4>
+                <p class="text-[11px] text-gray-500 mt-1">${v.uploaderName || 'Uploader'}</p>
+                <p class="text-[10px] text-gray-400">${v.views || 0} visualizações</p>
+            </div>
+        </div>
+        `;
+    }).join('');
 
-            requestAnimationFrame(() => {
-                observeDurationElements();
-            });
-        }
+    requestAnimationFrame(() => {
+        observeDurationElements();
+    });
+}
 
         function renderEditButtons() {
             const container = document.getElementById('player-edit-buttons');
@@ -1668,6 +1823,7 @@
                 document.getElementById('edit-video-id').value = state.currentVideoId;
                 document.getElementById('edit-title').value = state.currentVideoData.title;
                 document.getElementById('edit-desc').value = state.currentVideoData.description || '';
+                updateEditDescCounter();
                 document.querySelectorAll('[id^="edit-cat-"]').forEach(c => {
                     c.checked = state.currentVideoData.categories.includes(c.value);
                 });
@@ -1716,6 +1872,7 @@
                 document.getElementById('up-url').value = '';
                 document.getElementById('up-title').value = '';
                 document.getElementById('up-desc').value = '';
+                updateUpDescCounter();
                 document.getElementById('up-thumbnail-url').value = '';
                 document.getElementById('up-playlist').value = '';
                 document.querySelectorAll('.category-checkbox').forEach(c => c.checked = false);
@@ -2206,38 +2363,91 @@
             showToast('Legendas removidas');
         }
 
-        // NOVO: Fullscreen auto-hide controls
-        function setupFullscreenDetection() {
-            document.addEventListener('fullscreenchange', () => {
-                if (document.fullscreenElement) {
-                    resetFullscreenTimer();
-                } else {
-                    clearTimeout(state.fullscreenTimeout);
-                    showControls();
-                }
-            });
-            document.addEventListener('webkitfullscreenchange', () => {
-                if (document.webkitFullscreenElement) {
-                    resetFullscreenTimer();
-                } else {
-                    clearTimeout(state.fullscreenTimeout);
-                    showControls();
-                }
-            });
-        }
+// NOVA FUNÇÃO: configura detecção de inatividade (mouse/touch) para esconder controles
+function setupPlayerIdleDetection() {
+    const container = document.getElementById('player-container');
+    if (!container) return;
 
-        function resetFullscreenTimer() {
+    // Remove listeners antigos para evitar duplicados (caso a função seja chamada de novo)
+    container.removeEventListener('mousemove', resetIdleTimer);
+    container.removeEventListener('mousemove', resetFullscreenTimer);
+    container.removeEventListener('touchstart', resetIdleTimer, { passive: true });
+    container.removeEventListener('touchstart', resetFullscreenTimer, { passive: true });
+    container.removeEventListener('touchmove', resetIdleTimer, { passive: true });
+    container.removeEventListener('touchmove', resetFullscreenTimer, { passive: true });
+
+    // Adiciona os listeners unificados
+    container.addEventListener('mousemove', resetIdleTimer);
+    container.addEventListener('touchstart', resetIdleTimer, { passive: true });
+    container.addEventListener('touchmove', resetIdleTimer, { passive: true });
+}
+
+// NOVA FUNÇÃO: reseta o timer de inatividade (chamada a cada interação)
+function resetIdleTimer() {
+    // Mostra os controles imediatamente
+    showControls();
+
+    // Limpa o timer anterior
+    clearTimeout(state.idleTimeout);
+
+    // Se o vídeo estiver tocando, programa o esconder após 5 segundos
+    if (state.isPlaying) {
+        state.idleTimeout = setTimeout(() => {
+            hideControls();
+        }, 5000);
+    }
+}
+
+// SOBRESCREVE: resetFullscreenTimer agora também chama resetIdleTimer
+function resetFullscreenTimer() {
+    resetIdleTimer(); // unifica o comportamento
+    // Adicional: se estiver em fullscreen, o timer de inatividade já cuida
+}
+
+// SOBRESCREVE: setupFullscreenDetection para evitar conflitos
+function setupFullscreenDetection() {
+    document.addEventListener('fullscreenchange', () => {
+        if (document.fullscreenElement) {
+            resetIdleTimer(); // ao entrar em fullscreen, mostra controles e ativa timer
+        } else {
+            clearTimeout(state.idleTimeout);
             showControls();
-            state.controlsVisible = true;
-            clearTimeout(state.fullscreenTimeout);
-            const isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
-            if (isFullscreen) {
-                state.fullscreenTimeout = setTimeout(() => {
-                    hideControls();
-                    state.controlsVisible = false;
-                }, 5000);
-            }
         }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (document.webkitFullscreenElement) {
+            resetIdleTimer();
+        } else {
+            clearTimeout(state.idleTimeout);
+            showControls();
+        }
+    });
+}
+
+// SOBRESCREVE: showControls e hideControls (pequeno ajuste para lidar com o estado idle)
+function showControls() {
+    const controls = document.getElementById('custom-controls');
+    if (controls) {
+        controls.classList.remove('force-hidden');
+        controls.classList.add('visible');
+    }
+    // Cancela o timer de inatividade quando os controles são mostrados manualmente
+    clearTimeout(state.idleTimeout);
+    // Se o vídeo estiver tocando, já programa para esconder depois
+    if (state.isPlaying) {
+        state.idleTimeout = setTimeout(() => {
+            hideControls();
+        }, 5000);
+    }
+}
+
+function hideControls() {
+    const controls = document.getElementById('custom-controls');
+    if (controls) {
+        controls.classList.add('force-hidden');
+        controls.classList.remove('visible');
+    }
+}
 
         function showControls() {
             const controls = document.getElementById('custom-controls');
@@ -2256,18 +2466,27 @@
         }
 
         function togglePlay() {
-            const player = document.getElementById('html-player');
-            if (!player) return;
-            if (player.paused) { player.play();
-                state.isPlaying = true; } else { player.pause();
-                state.isPlaying = false; }
-            updatePlayButton();
-            syncMiniPlayer();
-            // Resetar timer em fullscreen
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                resetFullscreenTimer();
-            }
-        }
+    const player = document.getElementById('html-player');
+    if (!player) return;
+    if (player.paused) {
+        player.play();
+        state.isPlaying = true;
+    } else {
+        player.pause();
+        state.isPlaying = false;
+    }
+    updatePlayButton();
+    syncMiniPlayer();
+
+    // Resetar o timer de inatividade sempre que o play/pause for acionado
+    resetIdleTimer();
+
+    // Se pausar, cancela o timer e mantém controles visíveis
+    if (!state.isPlaying) {
+        clearTimeout(state.idleTimeout);
+        showControls();
+    }
+}
 
         function updatePlayButton() {
             const btn = document.getElementById('play-btn');
@@ -2421,6 +2640,54 @@
             if (indicator) indicator.classList.add('hidden');
             renderVideoGrid();
         }
+        // Atualizar contador de caracteres da descrição
+function updateUpDescCounter() {
+    const textarea = document.getElementById('up-desc');
+    const counter = document.getElementById('up-desc-counter');
+    if (textarea && counter) {
+        counter.textContent = `${textarea.value.length}/1500`;
+    }
+}
+function updateEditDescCounter() {
+    const textarea = document.getElementById('edit-desc');
+    const counter = document.getElementById('edit-desc-counter');
+    if (textarea && counter) {
+        counter.textContent = `${textarea.value.length}/1500`;
+    }
+}
+
+// Escapar HTML para evitar XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Processar descrição: links clicáveis, hashtags clicáveis, mantendo segurança
+function processDescription(rawText) {
+    if (!rawText) return '';
+    // Escapamos tudo primeiro
+    let safe = escapeHtml(rawText);
+    // Transformar URLs em links (http/https)
+    safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-yt-brand hover:underline break-all">$1</a>');
+    // Transformar hashtags em links que iniciam busca
+    safe = safe.replace(/#(\w+)/g, '<a href="#" class="hashtag-link text-yt-brand hover:underline" data-tag="$1">#$1</a>');
+    return safe;
+}
+
+// Ao clicar em uma hashtag na descrição, iniciar busca
+function handleDescriptionClick(e) {
+    const link = e.target.closest('.hashtag-link');
+    if (!link) return;
+    e.preventDefault();
+    const tag = link.getAttribute('data-tag');
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.value = '#' + tag;
+        state.currentSearch = '#' + tag;
+        handleSearch();
+    }
+}
 
         // Inicialização
         window.onload = init;
