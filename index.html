@@ -497,6 +497,29 @@ button:hover {
     border-right: 1px solid rgba(255,255,255,0.05) !important;
 }
 
+/* Forçar links na descrição a ficarem sempre laranja */
+#player-desc a {
+    color: #f97316 !important;
+    font-weight: 600;
+    text-decoration: underline;
+}
+#player-desc a:hover {
+    color: #ff7b2c !important;
+    text-decoration: underline;
+    text-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+}
+
+/* Links das hashtags também */
+a.hashtag-link {
+    color: #f97316 !important;
+    font-weight: 600;
+    text-decoration: underline;
+}
+a.hashtag-link:hover {
+    color: #ff7b2c !important;
+    text-shadow: 0 0 8px rgba(249, 115, 22, 0.4);
+}
+
 /* Badge "Novo" para vídeos recentes */
 .badge-new {
     position: absolute;
@@ -1567,13 +1590,20 @@ function updateActiveSidebarLink(page) {
         function filterCategory(catId) {
     state.selectedCategory = catId;
     renderCategories();
-    renderVideoGrid();
+    
+    const existingSection = document.getElementById('home-recommended-section');
+    if (existingSection) existingSection.remove();
+    
+    if (catId === 'all') {
+        renderHomeRecommendations();
+        renderVideoGrid();
+    } else {
+        renderVideoGrid();
+    }
+    
     navigateTo('home');
-    // Remove destaque de todos os links de categoria da sidebar (não interfere nos links principais)
     document.querySelectorAll('#sidebar-categories a').forEach(a => a.classList.remove('active-link'));
-    // Opcional: pode adicionar destaque ao item de categoria clicado, mas não implementamos para não conflitar com os links principais.
 }
-
         // =============================================
         // VÍDEOS (com thumbnails rápidos e lazy loading)
         // =============================================
@@ -1600,9 +1630,9 @@ function updateActiveSidebarLink(page) {
     const noResults = document.getElementById('no-results');
     if (!grid) return;
 
-    // Se estiver na Home, esconde o grid e mostra só os recomendados
+    // Se estiver na Home com "Tudo" e sem busca, NÃO renderiza nada
     const homePage = document.getElementById('page-home');
-    if (homePage && homePage.classList.contains('active')) {
+    if (homePage && homePage.classList.contains('active') && state.selectedCategory === 'all' && !state.currentSearch) {
         grid.innerHTML = '';
         if (noResults) noResults.classList.add('hidden');
         return;
@@ -1658,7 +1688,6 @@ function updateActiveSidebarLink(page) {
         observeDurationElements();
     });
 }
-
         function renderTrending() {
             const grid = document.getElementById('trending-grid');
             if (!grid) return;
@@ -1729,6 +1758,19 @@ function updateActiveSidebarLink(page) {
                 saveToViewHistory(id);
             }
         }
+        
+        function clearSearch() {
+    state.currentSearch = '';
+    document.getElementById('search-input').value = '';
+    const indicator = document.getElementById('search-indicator');
+    if (indicator) indicator.classList.add('hidden');
+    
+    const existingSection = document.getElementById('home-recommended-section');
+    if (existingSection) existingSection.remove();
+    
+    renderHomeRecommendations();
+    renderVideoGrid();
+}
 
         // NOVO: Seção de playlist no player
         function renderPlaylistSection(video) {
@@ -2653,22 +2695,19 @@ function hideControls() {
         }
 
         function handleSearch() {
-            if (!state.currentSearch) return;
-            const indicator = document.getElementById('search-indicator');
-            const indicatorText = document.getElementById('search-indicator-text');
-            if (indicator) indicator.classList.remove('hidden');
-            if (indicatorText) indicatorText.innerText = `Resultados para: "${state.currentSearch}"`;
-            renderVideoGrid();
-            navigateTo('home');
-        }
-
-        function clearSearch() {
-            state.currentSearch = '';
-            document.getElementById('search-input').value = '';
-            const indicator = document.getElementById('search-indicator');
-            if (indicator) indicator.classList.add('hidden');
-            renderVideoGrid();
-        }
+    if (!state.currentSearch) return;
+    
+    // Remove os recomendados da Home quando faz busca
+    const existingSection = document.getElementById('home-recommended-section');
+    if (existingSection) existingSection.remove();
+    
+    const indicator = document.getElementById('search-indicator');
+    const indicatorText = document.getElementById('search-indicator-text');
+    if (indicator) indicator.classList.remove('hidden');
+    if (indicatorText) indicatorText.innerText = `Resultados para: "${state.currentSearch}"`;
+    renderVideoGrid();
+    navigateTo('home');
+}
         // Atualizar contador de caracteres da descrição
 function updateUpDescCounter() {
     const textarea = document.getElementById('up-desc');
@@ -2695,12 +2734,30 @@ function escapeHtml(text) {
 // Processar descrição: links clicáveis, hashtags clicáveis, mantendo segurança
 function processDescription(rawText) {
     if (!rawText) return '';
-    // Escapamos tudo primeiro
+    
+    // Primeiro escapamos o texto original para evitar XSS
     let safe = escapeHtml(rawText);
-    // Transformar URLs em links (http/https)
-    safe = safe.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-yt-brand hover:underline break-all">$1</a>');
-    // Transformar hashtags em links que iniciam busca
-    safe = safe.replace(/#(\w+)/g, '<a href="#" class="hashtag-link text-yt-brand hover:underline" data-tag="$1">#$1</a>');
+    
+    // Agora transformamos URLs em links - mas precisamos "desescapar" o HTML que criamos
+    // Usamos um placeholder para não conflitar com o escape
+    safe = safe.replace(/(https?:\/\/[^\s<]+)/g, function(match) {
+        return '<!--LINK-->' + match + '<!--/LINK-->';
+    });
+    
+    // Transformar hashtags
+    safe = safe.replace(/#(\w+)/g, function(match, tag) {
+        return '<!--HASHTAG-->' + tag + '<!--/HASHTAG-->';
+    });
+    
+    // Agora escapamos tudo novamente (só afeta o que não é placeholder)
+    // E substituímos os placeholders pelo HTML real
+    
+    // Links
+    safe = safe.replace(/<!--LINK-->(.*?)<!--\/LINK-->/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-yt-brand hover:underline break-all" style="color:#f97316">$1</a>');
+    
+    // Hashtags
+    safe = safe.replace(/<!--HASHTAG-->(.*?)<!--\/HASHTAG-->/g, '<a href="#" class="hashtag-link text-yt-brand hover:underline" style="color:#f97316" data-tag="$1">#$1</a>');
+    
     return safe;
 }
 
