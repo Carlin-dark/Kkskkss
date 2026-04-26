@@ -3567,11 +3567,7 @@ async function toggleFollowChannel(uploaderId) {
 
 
 // =============================================
-// SISTEMA DE COMENTÁRIOS
-// =============================================
-
-// =============================================
-// SISTEMA DE COMENTÁRIOS (CORRIGIDO)
+// SISTEMA DE COMENTÁRIOS (SEM AUTENTICAÇÃO)
 // =============================================
 
 function setupCommentInput() {
@@ -3581,36 +3577,53 @@ function setupCommentInput() {
     
     if (!inputArea) return;
     
-    if (state.currentUser) {
-        inputArea.classList.remove('hidden');
-        if (loginPrompt) loginPrompt.classList.add('hidden');
-        
-        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
-        if (avatar) {
-            if (photo) {
-                avatar.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover">';
-            } else {
-                avatar.innerHTML = state.currentUser.displayName ? state.currentUser.displayName[0].toUpperCase() : 'U';
+    // Mostra área de comentário para TODOS (sem login)
+    inputArea.classList.remove('hidden');
+    if (loginPrompt) loginPrompt.classList.add('hidden');
+    
+    // Nome fixo ou aleatório para usuários não logados
+    const userName = state.currentUser ? 
+        (state.userProfile?.displayName || state.currentUser.displayName || 'Usuário') : 
+        'Anônimo_' + Math.random().toString(36).substring(2, 7);
+    
+    // Salva o nome temporário
+    if (!state.currentUser) {
+        state.tempUserName = state.tempUserName || userName;
+    }
+    
+    const photo = state.currentUser ? 
+        (state.userProfile?.photoURL || state.currentUser.photoURL) : '';
+    
+    if (avatar) {
+        if (photo) {
+            avatar.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover">';
+        } else {
+            const displayName = state.currentUser ? 
+                (state.currentUser.displayName || 'U') : state.tempUserName;
+            avatar.innerHTML = '<i class="fas fa-user text-sm"></i>';
+        }
+    }
+    
+    const textarea = document.getElementById('comment-text');
+    const nameInput = document.getElementById('comment-name-input');
+    
+    if (textarea && !textarea._hasCommentListener) {
+        textarea.addEventListener('input', function() {
+            var counter = document.getElementById('comment-counter');
+            var btn = document.getElementById('btn-post-comment');
+            var len = textarea.value.length;
+            if (counter) counter.textContent = len + '/500';
+            if (btn) btn.disabled = len === 0;
+        });
+        textarea.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') e.stopPropagation();
+            // Enviar com Ctrl+Enter
+            if (e.code === 'Enter' && e.ctrlKey) {
+                e.preventDefault();
+                postComment();
             }
-        }
-        
-        const textarea = document.getElementById('comment-text');
-        if (textarea && !textarea._hasCommentListener) {
-            textarea.addEventListener('input', function() {
-                var counter = document.getElementById('comment-counter');
-                var btn = document.getElementById('btn-post-comment');
-                var len = textarea.value.length;
-                if (counter) counter.textContent = len + '/500';
-                if (btn) btn.disabled = len === 0;
-            });
-            textarea.addEventListener('keydown', function(e) {
-                if (e.code === 'Space') e.stopPropagation();
-            });
-            textarea._hasCommentListener = true;
-        }
-    } else {
-        inputArea.classList.add('hidden');
-        if (loginPrompt) loginPrompt.classList.remove('hidden');
+        });
+        textarea._hasCommentListener = true;
     }
 }
 
@@ -3621,6 +3634,10 @@ function cancelComment() {
         document.getElementById('comment-counter').textContent = '0/500';
         document.getElementById('btn-post-comment').disabled = true;
     }
+    var nameInput = document.getElementById('comment-name-input');
+    if (nameInput && !state.currentUser) {
+        nameInput.value = '';
+    }
 }
 
 async function loadComments() {
@@ -3630,53 +3647,64 @@ async function loadComments() {
     
     try {
         var h = window.firestoreHelpers;
+        // Usa o projeto de comentários
         var ref = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
         var q = h.query(ref, h.orderBy('createdAt', 'desc'), h.limit(50));
         var snap = await h.getDocs(q);
-        var comments = snap.docs.map(function(d) { return { id: d.id, data: d.data() }; });
+        var comments = snap.docs.map(function(d) { 
+            return { id: d.id, data: d.data() }; 
+        });
         
         if (count) count.textContent = '(' + comments.length + ')';
         
         if (comments.length === 0) {
-            list.innerHTML = '<div class="text-center py-4"><p class="text-xs text-gray-500">Nenhum comentário ainda.</p></div>';
+            list.innerHTML = '<div class="text-center py-4"><p class="text-xs text-gray-500">Seja o primeiro a comentar! 💬</p></div>';
             return;
         }
         
         list.innerHTML = comments.map(function(c) {
             var data = c.data;
-            var isOwner = state.currentUser && data.userId === state.currentUser.uid;
             var timeStr = 'agora';
+            
             try {
-                var time = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt || Date.now());
+                var time = data.createdAt && data.createdAt.toDate ? 
+                    data.createdAt.toDate() : new Date(data.createdAt || Date.now());
                 timeStr = formatTimeAgo(time);
             } catch(e) {}
             
-            var liked = data.likedBy && data.likedBy.includes(state.currentUser && state.currentUser.uid);
-            
-            var actions = '';
-            if (state.currentUser) {
-                actions = '<div class="flex items-center gap-3 mt-1">' +
-                    '<button onclick="toggleCommentLike(\'' + c.id + '\')" class="text-[10px] ' + (liked ? 'text-red-500' : 'text-gray-500') + ' hover:text-red-500 transition">' +
-                        '<i class="fas fa-heart text-[9px]"></i> ' + (data.likes || 0) +
-                    '</button>' +
-                    (isOwner ? '<button onclick="deleteComment(\'' + c.id + '\')" class="text-[10px] text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash"></i></button>' : '') +
-                '</div>';
+            var userPhotoHTML = '';
+            if (data.userPhoto && (data.userPhoto.startsWith('http://') || data.userPhoto.startsWith('https://'))) {
+                userPhotoHTML = '<img src="' + data.userPhoto + '" class="w-full h-full object-cover" loading="lazy">';
             } else {
-                actions = '<div class="flex items-center gap-3 mt-1">' +
-                    '<span class="text-[10px] text-gray-500"><i class="fas fa-heart text-[9px]"></i> ' + (data.likes || 0) + '</span>' +
-                '</div>';
+                userPhotoHTML = '<i class="fas fa-user text-[10px]"></i>';
             }
             
-            return '<div class="flex gap-2 p-2 rounded-lg">' +
+            var liked = data.likedBy && data.userId && 
+                state.currentUser && data.likedBy.includes(state.currentUser.uid);
+            
+            var actions = '<div class="flex items-center gap-3 mt-1">' +
+                '<button onclick="toggleCommentLike(\'' + c.id + '\')" ' +
+                'class="text-[10px] ' + (liked ? 'text-red-500' : 'text-gray-400') + 
+                ' hover:text-red-500 transition font-medium">' +
+                '<i class="fas fa-heart text-[9px] mr-0.5"></i>' + 
+                (data.likes || 0) +
+                '</button>' +
+                '</div>';
+            
+            return '<div class="comment-item flex gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">' +
                 '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">' +
-                    (data.userPhoto ? '<img src="' + data.userPhoto + '" class="w-full h-full object-cover">' : (data.userName || 'U').charAt(0).toUpperCase()) +
+                    userPhotoHTML +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
-                    '<div class="flex items-center gap-2">' +
-                        '<span class="font-bold text-xs">' + (data.userName || 'Usuário') + '</span>' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                        '<span class="font-bold text-xs text-white">' + 
+                            (data.userName || 'Anônimo') + 
+                        '</span>' +
                         '<span class="text-[10px] text-gray-500">' + timeStr + '</span>' +
                     '</div>' +
-                    '<p class="text-xs mt-1 break-words">' + (data.text || '') + '</p>' +
+                    '<p class="text-xs mt-1 break-words text-gray-200 leading-relaxed">' + 
+                        (data.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+                    '</p>' +
                     actions +
                 '</div>' +
             '</div>';
@@ -3684,88 +3712,153 @@ async function loadComments() {
         
     } catch (e) {
         console.error('Erro ao carregar comentários:', e);
-        list.innerHTML = '<p class="text-xs text-gray-500 text-center py-4">Erro ao carregar.</p>';
+        list.innerHTML = '<p class="text-xs text-red-400 text-center py-4">Erro ao carregar comentários.</p>';
     }
 }
 
 async function postComment() {
-    if (!state.currentUser || !state.currentVideoId) {
-        showToast('Faça login para comentar.', 'error');
-        return;
-    }
-    
     var textarea = document.getElementById('comment-text');
     if (!textarea) return;
     
     var text = textarea.value.trim();
-    if (!text) return;
-    if (text.length > 500) { showToast('Máximo 500 caracteres.', 'error'); return; }
+    if (!text) {
+        showToast('Escreva um comentário.', 'error');
+        return;
+    }
+    if (text.length > 500) { 
+        showToast('Máximo 500 caracteres.', 'error'); 
+        return; 
+    }
     
     var btn = document.getElementById('btn-post-comment');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>'; }
+    if (btn) { 
+        btn.disabled = true; 
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Enviando...'; 
+    }
     
     try {
         var h = window.firestoreHelpers;
-        var ref = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
-        await h.addDoc(ref, {
+        
+        // ID único para o usuário (real ou temporário)
+        var userId = state.currentUser ? state.currentUser.uid : 
+            'anon_' + (state.tempUserId || Math.random().toString(36).substring(2, 15));
+        
+        var userName = state.currentUser ? 
+            (state.userProfile?.displayName || state.currentUser.displayName || 'Usuário') : 
+            (state.tempUserName || 'Anônimo_' + Math.random().toString(36).substring(2, 7));
+        
+        // Salva o ID e nome temporário
+        if (!state.currentUser) {
+            state.tempUserId = userId;
+            state.tempUserName = userName;
+        }
+        
+        // Cria o documento do vídeo se não existir
+        var videoRef = h.doc(window.commentsDb, 'videos', state.currentVideoId);
+        var videoSnap = await h.getDoc(videoRef);
+        
+        if (!videoSnap.exists()) {
+            await h.setDoc(videoRef, {
+                videoId: state.currentVideoId,
+                createdAt: h.serverTimestamp()
+            });
+            console.log('✅ Documento do vídeo criado');
+        }
+        
+        // Cria o comentário
+        var commentsRef = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        
+        var commentData = {
             text: text,
-            userId: state.currentUser.uid,
-            userName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
-            userPhoto: state.userProfile?.photoURL || '',
+            userId: userId,
+            userName: userName,
+            userPhoto: state.currentUser ? 
+                (state.userProfile?.photoURL || state.currentUser.photoURL || '') : '',
             likes: 0,
             likedBy: [],
             createdAt: h.serverTimestamp()
-        });
+        };
         
+        console.log('💬 Enviando comentário:', commentData);
+        await h.addDoc(commentsRef, commentData);
+        console.log('✅ Comentário adicionado!');
+        
+        // Limpa o campo
         textarea.value = '';
         document.getElementById('comment-counter').textContent = '0/500';
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; }
-        showToast('Comentário adicionado!');
-        loadComments();
+        if (btn) { 
+            btn.disabled = true; 
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; 
+        }
+        
+        showToast('Comentário adicionado! 🎉');
+        await loadComments();
         
     } catch (e) {
-        console.error('Erro:', e);
-        showToast('Erro ao comentar.', 'error');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; }
+        console.error('❌ Erro:', e);
+        showToast('Erro ao comentar: ' + e.message, 'error');
+        if (btn) { 
+            btn.disabled = false; 
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; 
+        }
     }
 }
 
-async function deleteComment(commentId) {
-    if (!confirm('Excluir comentário?')) return;
-    try {
-        var h = window.firestoreHelpers;
-        await h.deleteDoc(h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId));
-        showToast('Excluído!');
-        loadComments();
-    } catch (e) { showToast('Erro ao excluir', 'error'); }
-}
-
 async function toggleCommentLike(commentId) {
-    if (!state.currentUser) { showToast('Faça login para curtir.', 'info'); return; }
     try {
         var h = window.firestoreHelpers;
         var ref = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
         var snap = await h.getDoc(ref);
+        
         if (!snap.exists()) return;
+        
         var data = snap.data();
-        if ((data.likedBy || []).includes(state.currentUser.uid)) {
-            await h.updateDoc(ref, { likes: h.increment(-1), likedBy: h.arrayRemove(state.currentUser.uid) });
+        var likedBy = data.likedBy || [];
+        
+        if (state.currentUser) {
+            // Usuário logado: controle normal
+            if (likedBy.includes(state.currentUser.uid)) {
+                await h.updateDoc(ref, { 
+                    likes: h.increment(-1), 
+                    likedBy: h.arrayRemove(state.currentUser.uid) 
+                });
+            } else {
+                await h.updateDoc(ref, { 
+                    likes: h.increment(1), 
+                    likedBy: h.arrayUnion(state.currentUser.uid) 
+                });
+            }
         } else {
-            await h.updateDoc(ref, { likes: h.increment(1), likedBy: h.arrayUnion(state.currentUser.uid) });
+            // Usuário anônimo: permite curtir mas pode ser impreciso
+            await h.updateDoc(ref, { 
+                likes: h.increment(1)
+            });
         }
-        loadComments();
-    } catch (e) { console.error(e); }
+        
+        await loadComments();
+    } catch (e) {
+        console.error('Erro ao curtir:', e);
+    }
 }
 
 function formatTimeAgo(date) {
-    if (!date) return '';
-    var diff = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (diff < 60) return 'agora';
-    if (diff < 3600) return 'há ' + Math.floor(diff/60) + ' min';
-    if (diff < 86400) return 'há ' + Math.floor(diff/3600) + ' h';
-    if (diff < 2592000) return 'há ' + Math.floor(diff/86400) + ' d';
+    if (!date) return 'agora';
+    var now = new Date();
+    var diff = Math.floor((now - date) / 1000);
+    
+    if (diff < 0) return 'agora';
+    if (diff < 60) return 'agora mesmo';
+    if (diff < 3600) return 'há ' + Math.floor(diff / 60) + ' min';
+    if (diff < 86400) return 'há ' + Math.floor(diff / 3600) + ' h';
+    if (diff < 2592000) return 'há ' + Math.floor(diff / 86400) + ' d';
+    
     return date.toLocaleDateString('pt-BR');
 }
+
+// Inicializar estado temporário para anônimos
+if (!state) state = {};
+state.tempUserId = null;
+state.tempUserName = null;
         // Inicialização
         window.onload = init;
         window.addEventListener('hashchange', () => {
