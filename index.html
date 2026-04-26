@@ -2993,8 +2993,6 @@ async function searchAnimeImage(title) {
     }
 }
 
-// Upload modificado para gerar thumbnail automaticamente
-// Upload modificado para gerar thumbnail automaticamente
 async function handleUploadWithAutoThumbnail() {
     const agreeTerms = document.getElementById('agree-terms');
     if (agreeTerms && !agreeTerms.checked) {
@@ -3006,7 +3004,9 @@ async function handleUploadWithAutoThumbnail() {
     const desc = document.getElementById('up-desc').value.trim();
     const thumbnailURLInput = document.getElementById('up-thumbnail-url').value.trim();
     const playlist = document.getElementById('up-playlist').value.trim();
-    const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+    const selectedCats = Array.from(
+        document.querySelectorAll('.category-checkbox:checked')
+    ).map(c => c.value);
 
     if (!url || !title) {
         return showToast('Preencha URL e Título.', 'error');
@@ -3022,21 +3022,28 @@ async function handleUploadWithAutoThumbnail() {
     }
 
     try {
-        let thumbnailURL = thumbnailURLInput;
+        let thumbnailURL = thumbnailURLInput || null;
         
         // Se não foi fornecida thumbnail, tenta gerar automaticamente
         if (!thumbnailURL) {
-            showToast('Gerando capa automaticamente...', 'info');
+            console.log('🎨 Iniciando geração automática de capa...');
             thumbnailURL = await generateThumbnail(url, title);
+            
+            if (thumbnailURL && thumbnailURL.startsWith('data:image')) {
+                // Se for data URL (frame capturado), não salvamos no Firestore
+                // porque é muito grande. Usamos apenas para preview.
+                console.log('⚠️ Data URL muito grande, buscando alternativa...');
+                thumbnailURL = null; // Não salva data URL
+            }
         }
         
         const videoData = {
             url,
             title,
-            description: desc,
+            description: desc || '',
             categories: selectedCats,
             uploaderId: state.currentUser.uid,
-            uploaderName: state.userProfile?.displayName || state.currentUser.displayName,
+            uploaderName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
             uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
             views: 0,
             likes: 0,
@@ -3046,9 +3053,14 @@ async function handleUploadWithAutoThumbnail() {
             createdAt: window.firestoreHelpers.serverTimestamp()
         };
         
-        if (thumbnailURL) {
+        // Só adiciona thumbnailURL se for uma URL HTTP válida
+        if (thumbnailURL && (thumbnailURL.startsWith('http://') || thumbnailURL.startsWith('https://'))) {
             videoData.thumbnailURL = thumbnailURL;
+            console.log('✅ Thumbnail adicionada:', thumbnailURL);
+        } else {
+            console.log('⚠️ Nenhuma thumbnail válida, usando placeholder');
         }
+        
         if (playlist) {
             videoData.playlist = playlist;
         }
@@ -3058,12 +3070,12 @@ async function handleUploadWithAutoThumbnail() {
             videoData
         );
         
-        showToast(thumbnailURL ? 'Vídeo publicado com capa!' : 'Vídeo publicado!');
+        showToast(thumbnailURL ? 'Vídeo publicado com capa!' : 'Vídeo publicado! (sem capa automática)');
         toggleUploadModal(false);
         await loadVideos();
         
     } catch (e) {
-        console.error('Erro ao publicar:', e);
+        console.error('❌ Erro ao publicar:', e);
         showToast('Erro ao publicar: ' + e.message, 'error');
     } finally {
         if (btnPublicar) {
@@ -3073,35 +3085,126 @@ async function handleUploadWithAutoThumbnail() {
     }
 }
 
-// Função principal: tenta capturar frame do vídeo
+// =============================================
+// GERADOR AUTOMÁTICO DE THUMBNAILS (CORRIGIDO)
+// =============================================
+
 async function generateThumbnail(videoUrl, videoTitle) {
-    // Tenta capturar frame primeiro
-    const frameUrl = await captureVideoFrame(videoUrl);
-    if (frameUrl) return frameUrl;
+    console.log('🎨 Tentando gerar capa para:', videoTitle);
     
-    // Se falhar, busca imagem de anime
-    const animeUrl = await searchAnimeImage(videoTitle);
-    if (animeUrl) return animeUrl;
+    // PRIMEIRO: Tenta buscar imagem de anime (mais confiável)
+    try {
+        const animeUrl = await searchAnimeImageEnhanced(videoTitle);
+        if (animeUrl) {
+            console.log('✅ Capa encontrada via API de anime:', animeUrl);
+            return animeUrl;
+        }
+    } catch (e) {
+        console.log('⚠️ Erro na busca de anime:', e.message);
+    }
     
-    // Se tudo falhar, retorna null (usa placeholder)
+    // SEGUNDO: Tenta capturar frame do vídeo
+    try {
+        const frameUrl = await captureVideoFrame(videoUrl);
+        if (frameUrl) {
+            console.log('✅ Frame capturado do vídeo');
+            return frameUrl;
+        }
+    } catch (e) {
+        console.log('⚠️ Erro ao capturar frame:', e.message);
+    }
+    
+    console.log('❌ Nenhuma capa gerada, usando placeholder');
     return null;
 }
 
-// Captura um frame do vídeo
+// NOVA: Busca melhorada de imagem de anime
+async function searchAnimeImageEnhanced(title) {
+    try {
+        // Limpa o título para extrair palavras-chave
+        const cleanTitle = title
+            .replace(/\([^)]*\)/g, '')
+            .replace(/\[[^\]]*\]/g, '')
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        const keywords = cleanTitle.split(' ')
+            .filter(w => w.length > 2)
+            .slice(0, 4)
+            .join(' ');
+        
+        if (!keywords || keywords.length < 3) {
+            console.log('⚠️ Título muito curto para busca');
+            return null;
+        }
+        
+        console.log('🔍 Buscando anime:', keywords);
+        
+        // Timeout de 5 segundos para a API
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        
+        const response = await fetch(
+            `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(keywords)}&limit=3&order_by=popularity`,
+            { signal: controller.signal }
+        );
+        
+        clearTimeout(timeout);
+        
+        if (!response.ok) {
+            console.log('⚠️ API retornou status:', response.status);
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+            // Pega a imagem de maior qualidade do primeiro resultado
+            for (const anime of data.data) {
+                const imgUrl = anime.images?.jpg?.large_image_url 
+                            || anime.images?.jpg?.image_url
+                            || anime.images?.webp?.large_image_url
+                            || anime.images?.webp?.image_url;
+                
+                if (imgUrl) {
+                    console.log('📸 Imagem encontrada:', imgUrl);
+                    return imgUrl;
+                }
+            }
+        }
+        
+        console.log('⚠️ Nenhuma imagem encontrada na API');
+        return null;
+        
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            console.log('⏰ Timeout na API de anime');
+        } else {
+            console.log('❌ Erro na API:', e.message);
+        }
+        return null;
+    }
+}
+
+// Captura frame do vídeo (CORRIGIDA)
 function captureVideoFrame(videoUrl) {
     return new Promise((resolve) => {
         const video = document.createElement('video');
         video.crossOrigin = 'anonymous';
-        video.preload = 'metadata';
+        video.preload = 'auto'; // Mudado de 'metadata' para 'auto'
+        video.muted = true; // Importante para autoplay
         video.src = videoUrl;
         
         const timeout = setTimeout(() => {
+            console.log('⏰ Timeout ao capturar frame');
             video.remove();
             resolve(null);
-        }, 8000);
+        }, 10000);
         
         video.addEventListener('loadedmetadata', () => {
             const seekTime = Math.min(30, (video.duration || 60) / 2);
+            console.log('⏩ Pulando para:', seekTime, 'segundos');
             video.currentTime = seekTime;
         });
         
@@ -3110,56 +3213,60 @@ function captureVideoFrame(videoUrl) {
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 360;
+                
+                if (canvas.width === 0 || canvas.height === 0) {
+                    console.log('⚠️ Dimensões do vídeo inválidas');
+                    clearTimeout(timeout);
+                    video.remove();
+                    canvas.remove();
+                    resolve(null);
+                    return;
+                }
+                
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                
+                // Reduz qualidade para não ficar muito grande
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                 
                 clearTimeout(timeout);
                 video.pause();
                 video.remove();
                 canvas.remove();
+                
+                console.log('✅ Frame capturado com sucesso');
                 resolve(dataUrl);
+                
             } catch (e) {
+                console.log('❌ Erro ao desenhar frame:', e.message);
                 clearTimeout(timeout);
                 video.remove();
                 resolve(null);
             }
         });
         
-        video.addEventListener('error', () => {
+        video.addEventListener('error', (e) => {
+            console.log('❌ Erro no vídeo:', video.error?.message || 'Desconhecido');
             clearTimeout(timeout);
             video.remove();
             resolve(null);
         });
         
-        // Se já tiver metadados carregados
-        if (video.readyState >= 1) {
-            const seekTime = Math.min(30, (video.duration || 60) / 2);
-            video.currentTime = seekTime;
-        }
+        video.addEventListener('canplay', () => {
+            console.log('✅ Vídeo pode ser reproduzido');
+            if (video.readyState >= 1) {
+                const seekTime = Math.min(30, (video.duration || 60) / 2);
+                video.currentTime = seekTime;
+            }
+        });
+        
+        // Tenta carregar o vídeo
+        video.load();
     });
 }
 
-// Busca imagem de anime
-async function searchAnimeImage(title) {
-    try {
-        const keywords = title.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2).slice(0, 3).join(' ');
-        if (!keywords) return null;
-        
-        const response = await fetch('https://api.jikan.moe/v4/anime?q=' + encodeURIComponent(keywords) + '&limit=1');
-        if (!response.ok) return null;
-        
-        const data = await response.json();
-        if (data.data && data.data.length > 0) {
-            return data.data[0].images?.jpg?.large_image_url || 
-                   data.data[0].images?.jpg?.image_url || null;
-        }
-        return null;
-    } catch (e) {
-        return null;
-    }
-}
-
+// Função original searchAnimeImage - REMOVER e usar searchAnimeImageEnhanced
+// Basta comentar ou remover a função antiga
 // =============================================
 // SISTEMA DE RECOMENDADOS NA HOME
 // =============================================
