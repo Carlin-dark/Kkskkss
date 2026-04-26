@@ -3565,9 +3565,8 @@ async function toggleFollowChannel(uploaderId) {
 
 
 
-
 // =============================================
-// SISTEMA DE COMENTÁRIOS (SEM AUTENTICAÇÃO)
+// SISTEMA DE COMENTÁRIOS (LOGIN OBRIGATÓRIO)
 // =============================================
 
 function setupCommentInput() {
@@ -3577,66 +3576,89 @@ function setupCommentInput() {
     
     if (!inputArea) return;
     
-    // Mostra área de comentário para TODOS (sem login)
-    inputArea.classList.remove('hidden');
-    if (loginPrompt) loginPrompt.classList.add('hidden');
-    
-    // Nome fixo ou aleatório para usuários não logados
-    const userName = state.currentUser ? 
-        (state.userProfile?.displayName || state.currentUser.displayName || 'Usuário') : 
-        'Anônimo_' + Math.random().toString(36).substring(2, 7);
-    
-    // Salva o nome temporário
-    if (!state.currentUser) {
-        state.tempUserName = state.tempUserName || userName;
-    }
-    
-    const photo = state.currentUser ? 
-        (state.userProfile?.photoURL || state.currentUser.photoURL) : '';
-    
-    if (avatar) {
-        if (photo) {
-            avatar.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover">';
-        } else {
-            const displayName = state.currentUser ? 
-                (state.currentUser.displayName || 'U') : state.tempUserName;
-            avatar.innerHTML = '<i class="fas fa-user text-sm"></i>';
-        }
-    }
-    
-    const textarea = document.getElementById('comment-text');
-    const nameInput = document.getElementById('comment-name-input');
-    
-    if (textarea && !textarea._hasCommentListener) {
-        textarea.addEventListener('input', function() {
-            var counter = document.getElementById('comment-counter');
-            var btn = document.getElementById('btn-post-comment');
-            var len = textarea.value.length;
-            if (counter) counter.textContent = len + '/500';
-            if (btn) btn.disabled = len === 0;
-        });
-        textarea.addEventListener('keydown', function(e) {
-            if (e.code === 'Space') e.stopPropagation();
-            // Enviar com Ctrl+Enter
-            if (e.code === 'Enter' && e.ctrlKey) {
-                e.preventDefault();
-                postComment();
+    if (state.currentUser) {
+        // ✅ USUÁRIO LOGADO: Mostra área de comentário
+        inputArea.classList.remove('hidden');
+        if (loginPrompt) loginPrompt.classList.add('hidden');
+        
+        // Foto do perfil
+        const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
+        if (avatar) {
+            if (photo && (photo.startsWith('http://') || photo.startsWith('https://'))) {
+                avatar.innerHTML = '<img src="' + photo + '" class="w-full h-full object-cover" alt="Sua foto">';
+            } else {
+                const initial = (state.userProfile?.displayName || state.currentUser.displayName || 'U').charAt(0).toUpperCase();
+                avatar.innerHTML = '<span class="text-sm font-bold">' + initial + '</span>';
             }
-        });
-        textarea._hasCommentListener = true;
+        }
+        
+        // Placeholder personalizado
+        const textarea = document.getElementById('comment-text');
+        if (textarea) {
+            const userName = state.userProfile?.displayName || state.currentUser.displayName || 'Usuário';
+            textarea.placeholder = 'Comente como ' + userName + '...';
+        }
+        
+        // Configurar listeners
+        if (textarea && !textarea._hasCommentListener) {
+            textarea.addEventListener('input', function() {
+                var counter = document.getElementById('comment-counter');
+                var btn = document.getElementById('btn-post-comment');
+                var len = textarea.value.length;
+                if (counter) counter.textContent = len + '/500';
+                if (btn) btn.disabled = len === 0;
+            });
+            textarea.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') e.stopPropagation();
+                if (e.code === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    postComment();
+                }
+            });
+            textarea._hasCommentListener = true;
+        }
+        
+    } else {
+        // ❌ USUÁRIO NÃO LOGADO: Esconde input e mostra botão de login
+        inputArea.classList.add('hidden');
+        if (loginPrompt) {
+            loginPrompt.classList.remove('hidden');
+            loginPrompt.innerHTML = `
+                <div class="flex flex-col items-center gap-3 py-3">
+                    <i class="fas fa-lock text-3xl text-gray-500"></i>
+                    <p class="text-xs text-gray-400 text-center">Faça login para comentar</p>
+                    <button onclick="navigateTo('auth')" class="bg-yt-brand text-white px-5 py-2 rounded-full text-sm font-bold hover:brightness-110 transition active:scale-95">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Fazer login
+                    </button>
+                </div>
+            `;
+        }
     }
 }
 
 function cancelComment() {
     var textarea = document.getElementById('comment-text');
+    var editId = document.getElementById('edit-comment-id');
+    
     if (textarea) {
         textarea.value = '';
         document.getElementById('comment-counter').textContent = '0/500';
         document.getElementById('btn-post-comment').disabled = true;
+        textarea.placeholder = state.currentUser ? 
+            'Comente como ' + (state.userProfile?.displayName || state.currentUser.displayName || 'Usuário') + '...' : 
+            'Adicione um comentário...';
     }
-    var nameInput = document.getElementById('comment-name-input');
-    if (nameInput && !state.currentUser) {
-        nameInput.value = '';
+    
+    // Se estava editando, cancela
+    if (editId) {
+        editId.value = '';
+        var btnPost = document.getElementById('btn-post-comment');
+        if (btnPost) {
+            btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
+            btnPost.onclick = postComment;
+        }
+        var btnCancel = document.getElementById('btn-cancel-edit');
+        if (btnCancel) btnCancel.remove();
     }
 }
 
@@ -3647,7 +3669,6 @@ async function loadComments() {
     
     try {
         var h = window.firestoreHelpers;
-        // Usa o projeto de comentários
         var ref = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
         var q = h.query(ref, h.orderBy('createdAt', 'desc'), h.limit(50));
         var snap = await h.getDocs(q);
@@ -3658,12 +3679,13 @@ async function loadComments() {
         if (count) count.textContent = '(' + comments.length + ')';
         
         if (comments.length === 0) {
-            list.innerHTML = '<div class="text-center py-4"><p class="text-xs text-gray-500">Seja o primeiro a comentar! 💬</p></div>';
+            list.innerHTML = '<div class="text-center py-6"><i class="fas fa-comment-dots text-3xl text-gray-600 mb-2"></i><p class="text-xs text-gray-500">Nenhum comentário ainda. Seja o primeiro!</p></div>';
             return;
         }
         
         list.innerHTML = comments.map(function(c) {
             var data = c.data;
+            var isOwner = state.currentUser && data.userId === state.currentUser.uid;
             var timeStr = 'agora';
             
             try {
@@ -3672,33 +3694,59 @@ async function loadComments() {
                 timeStr = formatTimeAgo(time);
             } catch(e) {}
             
+            // Foto do usuário que comentou
             var userPhotoHTML = '';
             if (data.userPhoto && (data.userPhoto.startsWith('http://') || data.userPhoto.startsWith('https://'))) {
                 userPhotoHTML = '<img src="' + data.userPhoto + '" class="w-full h-full object-cover" loading="lazy">';
             } else {
-                userPhotoHTML = '<i class="fas fa-user text-[10px]"></i>';
+                var initial = (data.userName || 'U').charAt(0).toUpperCase();
+                userPhotoHTML = '<span class="text-xs font-bold">' + initial + '</span>';
             }
             
-            var liked = data.likedBy && data.userId && 
-                state.currentUser && data.likedBy.includes(state.currentUser.uid);
+            // Verifica se curtiu
+            var liked = data.likedBy && state.currentUser && data.likedBy.includes(state.currentUser.uid);
             
-            var actions = '<div class="flex items-center gap-3 mt-1">' +
-                '<button onclick="toggleCommentLike(\'' + c.id + '\')" ' +
-                'class="text-[10px] ' + (liked ? 'text-red-500' : 'text-gray-400') + 
-                ' hover:text-red-500 transition font-medium">' +
-                '<i class="fas fa-heart text-[9px] mr-0.5"></i>' + 
-                (data.likes || 0) +
-                '</button>' +
-                '</div>';
+            // Ações (curtir + editar + excluir)
+            var actions = '<div class="flex items-center gap-2 mt-1.5">';
             
-            return '<div class="comment-item flex gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">' +
+            // Botão curtir
+            if (state.currentUser) {
+                actions += '<button onclick="toggleCommentLike(\'' + c.id + '\')" ' +
+                    'class="text-[11px] ' + (liked ? 'text-red-500' : 'text-gray-400') + 
+                    ' hover:text-red-500 transition font-medium">' +
+                    '<i class="fas fa-heart text-[10px] mr-1"></i>' + (data.likes || 0) +
+                    '</button>';
+            } else {
+                actions += '<span class="text-[11px] text-gray-500">' +
+                    '<i class="fas fa-heart text-[10px] mr-1"></i>' + (data.likes || 0) +
+                    '</span>';
+            }
+            
+            // Se for dono: editar e excluir
+            if (isOwner) {
+                actions += '<button onclick="editComment(\'' + c.id + '\', \'' + 
+                    (data.text || '').replace(/'/g, "\\'").replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+                    '\')" class="text-[10px] text-gray-400 hover:text-blue-400 transition ml-1">' +
+                    '<i class="fas fa-edit text-[9px] mr-0.5"></i>Editar' +
+                    '</button>';
+                
+                actions += '<button onclick="deleteComment(\'' + c.id + '\')" ' +
+                    'class="text-[10px] text-gray-400 hover:text-red-500 transition ml-1">' +
+                    '<i class="fas fa-trash text-[9px] mr-0.5"></i>Excluir' +
+                    '</button>';
+            }
+            
+            actions += '</div>';
+            
+            return '<div class="flex gap-2 p-2 rounded-lg hover:bg-white/5 transition-colors">' +
                 '<div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-yt-brand flex items-center justify-center text-white font-bold text-xs flex-shrink-0 overflow-hidden">' +
                     userPhotoHTML +
                 '</div>' +
                 '<div class="flex-1 min-w-0">' +
                     '<div class="flex items-center gap-2 flex-wrap">' +
-                        '<span class="font-bold text-xs text-white">' + 
-                            (data.userName || 'Anônimo') + 
+                        '<span class="font-bold text-xs ' + (isOwner ? 'text-yt-brand' : 'text-white') + '">' + 
+                            (data.userName || 'Usuário') + 
+                            (isOwner ? ' <span class="text-[10px] text-gray-500 font-normal">(você)</span>' : '') +
                         '</span>' +
                         '<span class="text-[10px] text-gray-500">' + timeStr + '</span>' +
                     '</div>' +
@@ -3716,7 +3764,112 @@ async function loadComments() {
     }
 }
 
+// NOVA FUNÇÃO: Editar comentário
+function editComment(commentId, currentText) {
+    if (!state.currentUser) return;
+    
+    var textarea = document.getElementById('comment-text');
+    if (!textarea) return;
+    
+    // Coloca o texto atual no textarea
+    textarea.value = currentText.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\'/g, "'");
+    textarea.focus();
+    
+    // Atualiza contador
+    var counter = document.getElementById('comment-counter');
+    if (counter) counter.textContent = textarea.value.length + '/500';
+    
+    // Ativa o botão
+    var btn = document.getElementById('btn-post-comment');
+    if (btn) btn.disabled = false;
+    
+    // Salva o ID do comentário sendo editado
+    var editIdInput = document.getElementById('edit-comment-id');
+    if (!editIdInput) {
+        editIdInput = document.createElement('input');
+        editIdInput.type = 'hidden';
+        editIdInput.id = 'edit-comment-id';
+        textarea.parentElement.appendChild(editIdInput);
+    }
+    editIdInput.value = commentId;
+    
+    // Muda o botão para "Salvar edição"
+    if (btn) {
+        btn.innerHTML = '<i class="fas fa-save mr-1"></i> Salvar';
+        btn.onclick = saveEditComment;
+    }
+    
+    // Adiciona botão cancelar
+    var cancelBtn = document.getElementById('btn-cancel-edit');
+    if (!cancelBtn) {
+        cancelBtn = document.createElement('button');
+        cancelBtn.id = 'btn-cancel-edit';
+        cancelBtn.className = 'text-xs font-bold text-gray-500 hover:text-white px-3 py-1 rounded-full transition ml-2';
+        cancelBtn.innerHTML = 'Cancelar';
+        cancelBtn.onclick = cancelComment;
+        btn.parentElement.appendChild(cancelBtn);
+    } else {
+        cancelBtn.style.display = 'inline-block';
+    }
+}
+
+// NOVA FUNÇÃO: Salvar edição do comentário
+async function saveEditComment() {
+    var editIdInput = document.getElementById('edit-comment-id');
+    var textarea = document.getElementById('comment-text');
+    
+    if (!editIdInput || !editIdInput.value) return;
+    
+    var commentId = editIdInput.value;
+    var newText = textarea.value.trim();
+    
+    if (!newText) {
+        showToast('O texto não pode estar vazio.', 'error');
+        return;
+    }
+    if (newText.length > 500) {
+        showToast('Máximo 500 caracteres.', 'error');
+        return;
+    }
+    
+    var btn = document.getElementById('btn-post-comment');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Salvando...';
+    }
+    
+    try {
+        var h = window.firestoreHelpers;
+        var ref = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
+        
+        await h.updateDoc(ref, {
+            text: newText
+        });
+        
+        console.log('✅ Comentário editado!');
+        showToast('Comentário atualizado! ✏️');
+        
+        // Limpa tudo
+        cancelComment();
+        await loadComments();
+        
+    } catch (e) {
+        console.error('❌ Erro ao editar:', e);
+        showToast('Erro ao editar: ' + e.message, 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save mr-1"></i> Salvar';
+        }
+    }
+}
+
 async function postComment() {
+    if (!state.currentUser) {
+        showToast('Faça login para comentar.', 'error');
+        navigateTo('auth');
+        return;
+    }
+    
     var textarea = document.getElementById('comment-text');
     if (!textarea) return;
     
@@ -3739,21 +3892,12 @@ async function postComment() {
     try {
         var h = window.firestoreHelpers;
         
-        // ID único para o usuário (real ou temporário)
-        var userId = state.currentUser ? state.currentUser.uid : 
-            'anon_' + (state.tempUserId || Math.random().toString(36).substring(2, 15));
+        // Usa dados do projeto principal
+        var userId = state.currentUser.uid;
+        var userName = state.userProfile?.displayName || state.currentUser.displayName || 'Usuário';
+        var userPhoto = state.userProfile?.photoURL || state.currentUser.photoURL || '';
         
-        var userName = state.currentUser ? 
-            (state.userProfile?.displayName || state.currentUser.displayName || 'Usuário') : 
-            (state.tempUserName || 'Anônimo_' + Math.random().toString(36).substring(2, 7));
-        
-        // Salva o ID e nome temporário
-        if (!state.currentUser) {
-            state.tempUserId = userId;
-            state.tempUserName = userName;
-        }
-        
-        // Cria o documento do vídeo se não existir
+        // Cria documento do vídeo se não existir
         var videoRef = h.doc(window.commentsDb, 'videos', state.currentVideoId);
         var videoSnap = await h.getDoc(videoRef);
         
@@ -3762,7 +3906,6 @@ async function postComment() {
                 videoId: state.currentVideoId,
                 createdAt: h.serverTimestamp()
             });
-            console.log('✅ Documento do vídeo criado');
         }
         
         // Cria o comentário
@@ -3772,16 +3915,13 @@ async function postComment() {
             text: text,
             userId: userId,
             userName: userName,
-            userPhoto: state.currentUser ? 
-                (state.userProfile?.photoURL || state.currentUser.photoURL || '') : '',
+            userPhoto: userPhoto,
             likes: 0,
             likedBy: [],
             createdAt: h.serverTimestamp()
         };
         
-        console.log('💬 Enviando comentário:', commentData);
         await h.addDoc(commentsRef, commentData);
-        console.log('✅ Comentário adicionado!');
         
         // Limpa o campo
         textarea.value = '';
@@ -3795,7 +3935,7 @@ async function postComment() {
         await loadComments();
         
     } catch (e) {
-        console.error('❌ Erro:', e);
+        console.error('Erro ao comentar:', e);
         showToast('Erro ao comentar: ' + e.message, 'error');
         if (btn) { 
             btn.disabled = false; 
@@ -3804,7 +3944,27 @@ async function postComment() {
     }
 }
 
+async function deleteComment(commentId) {
+    if (!confirm('Tem certeza que deseja excluir este comentário?')) return;
+    
+    try {
+        var h = window.firestoreHelpers;
+        await h.deleteDoc(h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId));
+        console.log('✅ Comentário excluído:', commentId);
+        showToast('Comentário excluído! 🗑️');
+        await loadComments();
+    } catch (e) {
+        console.error('❌ Erro ao excluir:', e);
+        showToast('Erro ao excluir: ' + e.message, 'error');
+    }
+}
+
 async function toggleCommentLike(commentId) {
+    if (!state.currentUser) {
+        showToast('Faça login para curtir.', 'info');
+        return;
+    }
+    
     try {
         var h = window.firestoreHelpers;
         var ref = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
@@ -3815,23 +3975,15 @@ async function toggleCommentLike(commentId) {
         var data = snap.data();
         var likedBy = data.likedBy || [];
         
-        if (state.currentUser) {
-            // Usuário logado: controle normal
-            if (likedBy.includes(state.currentUser.uid)) {
-                await h.updateDoc(ref, { 
-                    likes: h.increment(-1), 
-                    likedBy: h.arrayRemove(state.currentUser.uid) 
-                });
-            } else {
-                await h.updateDoc(ref, { 
-                    likes: h.increment(1), 
-                    likedBy: h.arrayUnion(state.currentUser.uid) 
-                });
-            }
-        } else {
-            // Usuário anônimo: permite curtir mas pode ser impreciso
+        if (likedBy.includes(state.currentUser.uid)) {
             await h.updateDoc(ref, { 
-                likes: h.increment(1)
+                likes: h.increment(-1), 
+                likedBy: h.arrayRemove(state.currentUser.uid) 
+            });
+        } else {
+            await h.updateDoc(ref, { 
+                likes: h.increment(1), 
+                likedBy: h.arrayUnion(state.currentUser.uid) 
             });
         }
         
@@ -3855,10 +4007,6 @@ function formatTimeAgo(date) {
     return date.toLocaleDateString('pt-BR');
 }
 
-// Inicializar estado temporário para anônimos
-if (!state) state = {};
-state.tempUserId = null;
-state.tempUserName = null;
         // Inicialização
         window.onload = init;
         window.addEventListener('hashchange', () => {
