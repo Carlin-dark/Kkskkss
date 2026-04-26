@@ -3566,7 +3566,7 @@ async function toggleFollowChannel(uploaderId) {
 
 
 // =============================================
-// SISTEMA DE COMENTÁRIOS (LOGIN OBRIGATÓRIO)
+// SISTEMA DE COMENTÁRIOS (CORRIGIDO - SEM AUTENTICAÇÃO NO PROJETO COMENTARI)
 // =============================================
 
 function setupCommentInput() {
@@ -3577,11 +3577,9 @@ function setupCommentInput() {
     if (!inputArea) return;
     
     if (state.currentUser) {
-        // ✅ USUÁRIO LOGADO: Mostra área de comentário
         inputArea.classList.remove('hidden');
         if (loginPrompt) loginPrompt.classList.add('hidden');
         
-        // Foto do perfil
         const photo = state.userProfile?.photoURL || state.currentUser.photoURL;
         if (avatar) {
             if (photo && (photo.startsWith('http://') || photo.startsWith('https://'))) {
@@ -3592,14 +3590,12 @@ function setupCommentInput() {
             }
         }
         
-        // Placeholder personalizado
         const textarea = document.getElementById('comment-text');
         if (textarea) {
             const userName = state.userProfile?.displayName || state.currentUser.displayName || 'Usuário';
             textarea.placeholder = 'Comente como ' + userName + '...';
         }
         
-        // Configurar listeners
         if (textarea && !textarea._hasCommentListener) {
             textarea.addEventListener('input', function() {
                 var counter = document.getElementById('comment-counter');
@@ -3612,14 +3608,19 @@ function setupCommentInput() {
                 if (e.code === 'Space') e.stopPropagation();
                 if (e.code === 'Enter' && e.ctrlKey) {
                     e.preventDefault();
-                    postComment();
+                    // Verifica se está editando ou postando
+                    var editId = document.getElementById('edit-comment-id');
+                    if (editId && editId.value) {
+                        saveEditComment();
+                    } else {
+                        postComment();
+                    }
                 }
             });
             textarea._hasCommentListener = true;
         }
         
     } else {
-        // ❌ USUÁRIO NÃO LOGADO: Esconde input e mostra botão de login
         inputArea.classList.add('hidden');
         if (loginPrompt) {
             loginPrompt.classList.remove('hidden');
@@ -3649,17 +3650,18 @@ function cancelComment() {
             'Adicione um comentário...';
     }
     
-    // Se estava editando, cancela
     if (editId) {
         editId.value = '';
-        var btnPost = document.getElementById('btn-post-comment');
-        if (btnPost) {
-            btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
-            btnPost.onclick = postComment;
-        }
-        var btnCancel = document.getElementById('btn-cancel-edit');
-        if (btnCancel) btnCancel.remove();
     }
+    
+    var btnPost = document.getElementById('btn-post-comment');
+    if (btnPost) {
+        btnPost.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar';
+        btnPost.onclick = postComment;
+    }
+    
+    var btnCancel = document.getElementById('btn-cancel-edit');
+    if (btnCancel) btnCancel.remove();
 }
 
 async function loadComments() {
@@ -3683,9 +3685,14 @@ async function loadComments() {
             return;
         }
         
+        // Pega o ID do dono do vídeo
+        var videoOwnerId = state.currentVideoData ? state.currentVideoData.uploaderId : null;
+        var isVideoOwner = state.currentUser && videoOwnerId === state.currentUser.uid;
+        
         list.innerHTML = comments.map(function(c) {
             var data = c.data;
             var isOwner = state.currentUser && data.userId === state.currentUser.uid;
+            var isReplying = data.replyTo && data.replyTo.trim() !== '';
             var timeStr = 'agora';
             
             try {
@@ -3694,7 +3701,7 @@ async function loadComments() {
                 timeStr = formatTimeAgo(time);
             } catch(e) {}
             
-            // Foto do usuário que comentou
+            // Foto do usuário
             var userPhotoHTML = '';
             if (data.userPhoto && (data.userPhoto.startsWith('http://') || data.userPhoto.startsWith('https://'))) {
                 userPhotoHTML = '<img src="' + data.userPhoto + '" class="w-full h-full object-cover" loading="lazy">';
@@ -3706,8 +3713,18 @@ async function loadComments() {
             // Verifica se curtiu
             var liked = data.likedBy && state.currentUser && data.likedBy.includes(state.currentUser.uid);
             
-            // Ações (curtir + editar + excluir)
-            var actions = '<div class="flex items-center gap-2 mt-1.5">';
+            // Texto da resposta (se for resposta)
+            var replyToHTML = '';
+            if (isReplying) {
+                replyToHTML = '<div class="text-[10px] text-gray-500 mb-1 pl-2 border-l-2 border-gray-600">' +
+                    '<span class="font-bold">@' + (data.replyToUserName || 'usuário') + '</span> ' +
+                    (data.replyToText || '').substring(0, 50) + 
+                    (data.replyToText && data.replyToText.length > 50 ? '...' : '') +
+                    '</div>';
+            }
+            
+            // Ações
+            var actions = '<div class="flex items-center gap-2 mt-1.5 flex-wrap">';
             
             // Botão curtir
             if (state.currentUser) {
@@ -3722,17 +3739,31 @@ async function loadComments() {
                     '</span>';
             }
             
-            // Se for dono: editar e excluir
+            // Botão responder (qualquer logado)
+            if (state.currentUser) {
+                actions += '<button onclick="replyToComment(\'' + c.id + '\', \'' + 
+                    (data.userName || 'Usuário').replace(/'/g, "\\'") + '\')" ' +
+                    'class="text-[10px] text-gray-400 hover:text-blue-400 transition ml-1">' +
+                    '<i class="fas fa-reply text-[9px] mr-0.5"></i>Responder' +
+                    '</button>';
+            }
+            
+            // Botão editar (apenas dono do comentário)
             if (isOwner) {
                 actions += '<button onclick="editComment(\'' + c.id + '\', \'' + 
                     (data.text || '').replace(/'/g, "\\'").replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                     '\')" class="text-[10px] text-gray-400 hover:text-blue-400 transition ml-1">' +
                     '<i class="fas fa-edit text-[9px] mr-0.5"></i>Editar' +
                     '</button>';
-                
+            }
+            
+            // Botão excluir (dono do comentário OU dono do vídeo)
+            if (isOwner || isVideoOwner) {
                 actions += '<button onclick="deleteComment(\'' + c.id + '\')" ' +
-                    'class="text-[10px] text-gray-400 hover:text-red-500 transition ml-1">' +
-                    '<i class="fas fa-trash text-[9px] mr-0.5"></i>Excluir' +
+                    'class="text-[10px] text-gray-400 hover:text-red-500 transition ml-1' + 
+                    (isVideoOwner && !isOwner ? ' font-bold' : '') + '">' +
+                    '<i class="fas fa-trash text-[9px] mr-0.5"></i>' + 
+                    (isVideoOwner && !isOwner ? 'Excluir (Dono)' : 'Excluir') +
                     '</button>';
             }
             
@@ -3750,6 +3781,7 @@ async function loadComments() {
                         '</span>' +
                         '<span class="text-[10px] text-gray-500">' + timeStr + '</span>' +
                     '</div>' +
+                    replyToHTML +
                     '<p class="text-xs mt-1 break-words text-gray-200 leading-relaxed">' + 
                         (data.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
                     '</p>' +
@@ -3764,16 +3796,24 @@ async function loadComments() {
     }
 }
 
-// NOVA FUNÇÃO: Editar comentário
-function editComment(commentId, currentText) {
-    if (!state.currentUser) return;
+// NOVA FUNÇÃO: Responder comentário
+function replyToComment(commentId, userName) {
+    if (!state.currentUser) {
+        showToast('Faça login para responder.', 'error');
+        navigateTo('auth');
+        return;
+    }
     
     var textarea = document.getElementById('comment-text');
     if (!textarea) return;
     
-    // Coloca o texto atual no textarea
-    textarea.value = currentText.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\'/g, "'");
+    // Foca no textarea com a menção
+    textarea.value = '@' + userName + ' ';
     textarea.focus();
+    
+    // Coloca o cursor no final
+    var len = textarea.value.length;
+    textarea.setSelectionRange(len, len);
     
     // Atualiza contador
     var counter = document.getElementById('comment-counter');
@@ -3783,7 +3823,36 @@ function editComment(commentId, currentText) {
     var btn = document.getElementById('btn-post-comment');
     if (btn) btn.disabled = false;
     
-    // Salva o ID do comentário sendo editado
+    // Salva que é uma resposta
+    var replyInput = document.getElementById('reply-to-id');
+    if (!replyInput) {
+        replyInput = document.createElement('input');
+        replyInput.type = 'hidden';
+        replyInput.id = 'reply-to-id';
+        textarea.parentElement.appendChild(replyInput);
+    }
+    replyInput.value = commentId;
+    
+    // Scroll suave até o textarea
+    textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// Função editComment (já existe, mantida)
+function editComment(commentId, currentText) {
+    if (!state.currentUser) return;
+    
+    var textarea = document.getElementById('comment-text');
+    if (!textarea) return;
+    
+    textarea.value = currentText.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\\'/g, "'");
+    textarea.focus();
+    
+    var counter = document.getElementById('comment-counter');
+    if (counter) counter.textContent = textarea.value.length + '/500';
+    
+    var btn = document.getElementById('btn-post-comment');
+    if (btn) btn.disabled = false;
+    
     var editIdInput = document.getElementById('edit-comment-id');
     if (!editIdInput) {
         editIdInput = document.createElement('input');
@@ -3793,13 +3862,15 @@ function editComment(commentId, currentText) {
     }
     editIdInput.value = commentId;
     
-    // Muda o botão para "Salvar edição"
+    // Limpa o reply se estiver editando
+    var replyInput = document.getElementById('reply-to-id');
+    if (replyInput) replyInput.value = '';
+    
     if (btn) {
         btn.innerHTML = '<i class="fas fa-save mr-1"></i> Salvar';
         btn.onclick = saveEditComment;
     }
     
-    // Adiciona botão cancelar
     var cancelBtn = document.getElementById('btn-cancel-edit');
     if (!cancelBtn) {
         cancelBtn = document.createElement('button');
@@ -3813,7 +3884,7 @@ function editComment(commentId, currentText) {
     }
 }
 
-// NOVA FUNÇÃO: Salvar edição do comentário
+// Salvar edição
 async function saveEditComment() {
     var editIdInput = document.getElementById('edit-comment-id');
     var textarea = document.getElementById('comment-text');
@@ -3842,14 +3913,11 @@ async function saveEditComment() {
         var h = window.firestoreHelpers;
         var ref = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', commentId);
         
-        await h.updateDoc(ref, {
-            text: newText
-        });
+        await h.updateDoc(ref, { text: newText });
         
         console.log('✅ Comentário editado!');
         showToast('Comentário atualizado! ✏️');
         
-        // Limpa tudo
         cancelComment();
         await loadComments();
         
@@ -3863,6 +3931,7 @@ async function saveEditComment() {
     }
 }
 
+// Postar comentário (com suporte a resposta)
 async function postComment() {
     if (!state.currentUser) {
         showToast('Faça login para comentar.', 'error');
@@ -3892,24 +3961,13 @@ async function postComment() {
     try {
         var h = window.firestoreHelpers;
         
-        // Usa dados do projeto principal
         var userId = state.currentUser.uid;
         var userName = state.userProfile?.displayName || state.currentUser.displayName || 'Usuário';
         var userPhoto = state.userProfile?.photoURL || state.currentUser.photoURL || '';
         
-        // Cria documento do vídeo se não existir
-        var videoRef = h.doc(window.commentsDb, 'videos', state.currentVideoId);
-        var videoSnap = await h.getDoc(videoRef);
-        
-        if (!videoSnap.exists()) {
-            await h.setDoc(videoRef, {
-                videoId: state.currentVideoId,
-                createdAt: h.serverTimestamp()
-            });
-        }
-        
-        // Cria o comentário
-        var commentsRef = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
+        // Verifica se é resposta
+        var replyInput = document.getElementById('reply-to-id');
+        var replyToId = replyInput ? replyInput.value : '';
         
         var commentData = {
             text: text,
@@ -3921,9 +3979,34 @@ async function postComment() {
             createdAt: h.serverTimestamp()
         };
         
+        // Se for resposta, busca dados do comentário original
+        if (replyToId) {
+            var originalRef = h.doc(window.commentsDb, 'videos', state.currentVideoId, 'comments', replyToId);
+            var originalSnap = await h.getDoc(originalRef);
+            if (originalSnap.exists()) {
+                var originalData = originalSnap.data();
+                commentData.replyTo = replyToId;
+                commentData.replyToUserId = originalData.userId;
+                commentData.replyToUserName = originalData.userName;
+                commentData.replyToText = originalData.text;
+            }
+            // Limpa o reply
+            if (replyInput) replyInput.value = '';
+        }
+        
+        // Cria documento do vídeo
+        var videoRef = h.doc(window.commentsDb, 'videos', state.currentVideoId);
+        var videoSnap = await h.getDoc(videoRef);
+        if (!videoSnap.exists()) {
+            await h.setDoc(videoRef, {
+                videoId: state.currentVideoId,
+                createdAt: h.serverTimestamp()
+            });
+        }
+        
+        var commentsRef = h.collection(window.commentsDb, 'videos', state.currentVideoId, 'comments');
         await h.addDoc(commentsRef, commentData);
         
-        // Limpa o campo
         textarea.value = '';
         document.getElementById('comment-counter').textContent = '0/500';
         if (btn) { 
@@ -3931,12 +4014,12 @@ async function postComment() {
             btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; 
         }
         
-        showToast('Comentário adicionado! 🎉');
+        showToast(replyToId ? 'Resposta enviada! 💬' : 'Comentário adicionado! 🎉');
         await loadComments();
         
     } catch (e) {
         console.error('Erro ao comentar:', e);
-        showToast('Erro ao comentar: ' + e.message, 'error');
+        showToast('Erro: ' + e.message, 'error');
         if (btn) { 
             btn.disabled = false; 
             btn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i> Comentar'; 
@@ -3955,7 +4038,7 @@ async function deleteComment(commentId) {
         await loadComments();
     } catch (e) {
         console.error('❌ Erro ao excluir:', e);
-        showToast('Erro ao excluir: ' + e.message, 'error');
+        showToast('Erro: ' + e.message, 'error');
     }
 }
 
