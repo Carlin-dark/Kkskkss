@@ -595,6 +595,333 @@ a.hashtag-link:hover {
     border-radius: 2px;
 }
 
+/* ═══════════════════════════════════════════ */
+/* PLAYER UNIVERSAL - CSS COMPLETO */
+/* ═══════════════════════════════════════════ */
+
+.universal-player {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(249,115,22,0.15);
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    contain: layout style paint;
+    z-index: 1;
+}
+
+.up-media-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+.up-media-layer video,
+.up-media-layer iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border: 0;
+    display: block;
+}
+
+/* OVERLAY - Z-index alto para ficar POR CIMA de iframes */
+.up-controls-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 999 !important;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    isolation: isolate;
+}
+.up-controls-overlay > * {
+    pointer-events: all;
+}
+
+/* Topo */
+.up-top-bar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+}
+.up-video-source {
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.up-video-source i { font-size: 11px; }
+
+/* Título */
+.up-floating-title {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    max-width: 60%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+.up-floating-title.show { opacity: 1; }
+
+/* Loading */
+.up-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.up-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #f97316;
+    border-radius: 50%;
+    animation: up-spin 0.8s linear infinite;
+}
+@keyframes up-spin { to { transform: rotate(360deg); } }
+
+/* Play central */
+.up-center-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.up-big-play {
+    width: 80px;
+    height: 80px;
+    background: rgba(249,115,22,0.85);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 40px rgba(249,115,22,0.5);
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    transform: scale(0.8);
+    opacity: 0;
+    pointer-events: auto;
+}
+.up-big-play.show {
+    transform: scale(1);
+    opacity: 1;
+}
+.up-big-play i {
+    color: #fff;
+    font-size: 28px;
+    margin-left: 4px;
+}
+
+/* Progresso */
+.up-progress-area {
+    padding: 0 20px;
+    margin-bottom: 2px;
+}
+.up-progress-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    transition: height 0.2s;
+}
+.up-progress-track:hover { height: 8px; }
+.up-progress-buffer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+}
+.up-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #f97316, #ff6b35, #ffa500);
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(249,115,22,0.5);
+    transition: width 0.05s linear;
+}
+.up-progress-thumb {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    background: #f97316;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(249,115,22,0.8);
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+.up-progress-track:hover .up-progress-thumb { opacity: 1; }
+.up-progress-tooltip {
+    position: absolute;
+    bottom: 20px;
+    background: rgba(0,0,0,0.9);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+.up-progress-track:hover .up-progress-tooltip { opacity: 1; }
+
+/* Barra de controles */
+.up-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
+    gap: 12px;
+    flex-wrap: wrap;
+    transition: opacity 0.3s;
+}
+.up-controls-bar.hidden { opacity: 0; pointer-events: none; }
+.up-left-group,
+.up-right-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Botões */
+.up-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 10px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
+    position: relative;
+    font-size: 15px;
+}
+.up-btn:hover { background: rgba(255,255,255,0.15); }
+.up-btn:active { transform: scale(0.95); }
+.up-btn.active { color: #f97316; }
+
+/* Volume */
+.up-volume-group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+.up-volume-slider-wrap {
+    width: 0;
+    overflow: hidden;
+    transition: width 0.3s;
+}
+.up-volume-group:hover .up-volume-slider-wrap { width: 80px; }
+.up-volume-slider {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.up-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #f97316;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Tempo */
+.up-time {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    margin: 0 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Velocidade */
+.up-speed-label { font-size: 12px; font-weight: bold; }
+.up-speed-menu {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background: rgba(0,0,0,0.95);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 100px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    z-index: 1000;
+    flex-direction: column;
+    gap: 2px;
+}
+.up-speed-menu.show { display: flex; }
+.up-speed-opt {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.up-speed-opt:hover { background: rgba(249,115,22,0.3); }
+.up-speed-opt.active { background: rgba(249,115,22,0.5); font-weight: bold; }
+
+/* Responsivo */
+@media (max-width: 640px) {
+    .universal-player {
+        border-radius: 0;
+        margin: -16px -16px 16px;
+        width: calc(100% + 32px);
+    }
+    .up-progress-area { padding: 0 8px; }
+    .up-controls-bar { padding: 8px; }
+    .up-btn { padding: 6px; min-width: 30px; min-height: 30px; }
+    .up-time { font-size: 10px; }
+}
+
 /* Badge "Novo" para vídeos recentes */
 .badge-new {
     position: absolute;
@@ -689,38 +1016,104 @@ a.hashtag-link:hover {
             <div class="max-w-[1600px] mx-auto">
                 <div class="flex flex-col lg:flex-row lg:gap-6 lg:p-6">
                     <div class="lg:w-[70%]">
-                        <div class="video-player-container aspect-video" id="player-container">
-                            <video id="html-player" playsinline webkit-playsinline class="w-full h-full" onclick="togglePlay()" crossorigin="anonymous"></video>
-                            <div class="custom-controls visible" id="custom-controls">
-                                <div class="progress-container" id="progress-container" onclick="seekVideo(event)" ontouchstart="seekVideo(event)">
-                                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
-                                </div>
-                                <div class="flex items-center justify-between flex-wrap gap-y-2">
-                                    <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                        <button class="control-btn" onclick="togglePlay()" id="play-btn"><i class="fas fa-pause text-sm sm:text-base"></i></button>
-                                        <button class="control-btn hidden xs:flex" onclick="skipTime(-10)"><i class="fas fa-rotate-left text-xs sm:text-sm"></i><span class="text-[10px] sm:text-xs ml-1">10s</span></button>
-                                        <button class="control-btn hidden xs:flex" onclick="skipTime(10)"><span class="text-[10px] sm:text-xs mr-1">10s</span><i class="fas fa-rotate-right text-xs sm:text-sm"></i></button>
-                                        <div class="control-btn group relative" id="volume-btn">
-                                            <i class="fas fa-volume-up text-sm"></i>
-                                            <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1" class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 w-20 h-1 accent-yt-brand" oninput="changeVolume(this.value)">
-                                        </div>
-                                        <span class="text-white text-[10px] sm:text-xs ml-1" id="time-display">0:00 / 0:00</span>
-                                    </div>
-                                    <div class="flex items-center gap-1 sm:gap-2 flex-wrap">
-                                        <button class="control-btn" onclick="toggleSubtitles()" id="cc-btn" title="Legendas"><i class="fas fa-closed-captioning text-xs sm:text-sm"></i></button>
-                                        <button class="control-btn" onclick="toggleMiniPlayer()" title="Mini Player"><i class="fas fa-window-minimize text-xs sm:text-sm"></i></button>
-                                        <button class="control-btn" onclick="toggleTheaterMode()" title="Modo Teatro"><i class="fas fa-grip-horizontal text-xs sm:text-sm"></i></button>
-                                        <button class="control-btn" onclick="togglePiP()" title="Picture-in-Picture"><i class="fas fa-window-restore text-xs sm:text-sm"></i></button>
-                                        <button class="control-btn" onclick="changePlaybackSpeed()" id="speed-btn"><span class="text-[10px] sm:text-xs font-bold">1x</span></button>
-                                        <button class="control-btn" onclick="toggleFullscreen()"><i class="fas fa-expand text-xs sm:text-sm"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Indicador de legenda ativa -->
-                            <div id="subtitle-indicator" class="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded hidden z-10">
-                                <i class="fas fa-closed-captioning mr-1"></i> CC
-                            </div>
-                        </div>
+<!-- ═══════════════════════════════════════════ -->
+<!-- PLAYER UNIVERSAL ANIMESTREAM v3.0 -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="universal-player" id="universal-player">
+    <!-- Camada de mídia -->
+    <div class="up-media-layer" id="up-media-layer">
+        <video id="html-player" playsinline webkit-playsinline crossorigin="anonymous"></video>
+    </div>
+    
+    <!-- Overlay de controle (acima de tudo) -->
+    <div class="up-controls-overlay" id="up-controls-overlay">
+        <!-- Indicadores no topo -->
+        <div class="up-top-bar" id="up-top-bar">
+            <span class="up-video-source" id="up-source-badge" style="display:none;"></span>
+        </div>
+        
+        <!-- Título flutuante -->
+        <div class="up-floating-title" id="up-floating-title"></div>
+        
+        <!-- Loading -->
+        <div class="up-loading" id="up-loading" style="display:none;">
+            <div class="up-spinner"></div>
+        </div>
+        
+        <!-- Play central grande -->
+        <div class="up-center-play" id="up-center-play">
+            <button class="up-big-play" id="up-big-play-btn">
+                <i class="fas fa-play"></i>
+            </button>
+        </div>
+        
+        <!-- Barra de progresso -->
+        <div class="up-progress-area" id="up-progress-area">
+            <div class="up-progress-track" id="up-progress-track">
+                <div class="up-progress-buffer" id="up-progress-buffer"></div>
+                <div class="up-progress-fill" id="up-progress-fill"></div>
+                <div class="up-progress-thumb" id="up-progress-thumb"></div>
+                <div class="up-progress-tooltip" id="up-progress-tooltip">0:00</div>
+            </div>
+        </div>
+        
+        <!-- Controles inferiores -->
+        <div class="up-controls-bar" id="up-controls-bar">
+            <div class="up-left-group">
+                <button class="up-btn" id="up-btn-play" title="Play/Pause (Espaço)">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="up-btn" id="up-btn-prev" title="Voltar 10s (←)">
+                    <i class="fas fa-rotate-left"></i>
+                </button>
+                <button class="up-btn" id="up-btn-next" title="Avançar 10s (→)">
+                    <i class="fas fa-rotate-right"></i>
+                </button>
+                <div class="up-volume-group">
+                    <button class="up-btn" id="up-btn-volume" title="Mudo (M)">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <div class="up-volume-slider-wrap">
+                        <input type="range" class="up-volume-slider" id="up-volume-slider" min="0" max="100" value="100" title="Volume">
+                    </div>
+                </div>
+                <span class="up-time" id="up-time">0:00 / 0:00</span>
+            </div>
+            <div class="up-right-group">
+                <button class="up-btn" id="up-btn-cc" title="Legendas (C)">
+                    <i class="fas fa-closed-captioning"></i>
+                </button>
+                <button class="up-btn" id="up-btn-speed" title="Velocidade">
+                    <span class="up-speed-label">1x</span>
+                </button>
+                <button class="up-btn" id="up-btn-mini" title="Mini Player (I)">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
+                <button class="up-btn" id="up-btn-theater" title="Teatro (T)">
+                    <i class="fas fa-grip-horizontal"></i>
+                </button>
+                <button class="up-btn" id="up-btn-pip" title="Picture-in-Picture (P)">
+                    <i class="fas fa-window-restore"></i>
+                </button>
+                <button class="up-btn" id="up-btn-fullscreen" title="Tela Cheia (F)">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Menu de velocidade -->
+    <div class="up-speed-menu" id="up-speed-menu" style="display:none;">
+        <button class="up-speed-opt" data-speed="0.5">0.5x</button>
+        <button class="up-speed-opt" data-speed="0.75">0.75x</button>
+        <button class="up-speed-opt active" data-speed="1">Normal</button>
+        <button class="up-speed-opt" data-speed="1.25">1.25x</button>
+        <button class="up-speed-opt" data-speed="1.5">1.5x</button>
+        <button class="up-speed-opt" data-speed="2">2x</button>
+    </div>
+</div>
+
+
                         <!-- Seção de legenda -->
                         <div id="subtitle-section" class="hidden mt-2 p-3 bg-gray-100 dark:bg-yt-darkHover rounded-xl">
                             <label class="text-xs font-bold flex items-center gap-2"><i class="fas fa-file-alt text-yt-brand"></i> URL da legenda (WebVTT)</label>
@@ -1639,11 +2032,22 @@ function updateActiveSidebarLink(page) {
         // NAVEGAÇÃO SPA
         // =============================================
         function navigateTo(pageId) {
-    // Limpa os IDs dos recomendados ao sair da Home
     if (pageId !== 'home') {
         window.recommendedVideoIds = [];
     }
     if (pageId === 'channel') renderChannelPage();
+    
+    if (pageId !== 'player') {
+        const mediaLayer = document.getElementById('up-media-layer');
+        if (mediaLayer) {
+            mediaLayer.querySelectorAll('iframe').forEach(f => f.remove());
+        }
+        const htmlPlayer = document.getElementById('html-player');
+        if (htmlPlayer) {
+            htmlPlayer.style.display = '';
+            htmlPlayer.src = '';
+        }
+    }
     
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     const pageEl = document.getElementById(`page-${pageId}`);
@@ -1655,7 +2059,6 @@ function updateActiveSidebarLink(page) {
         if (player && !state.miniPlayerActive) {
             player.pause();
             state.isPlaying = false;
-            updatePlayButton();
         }
     }
 
@@ -1663,9 +2066,7 @@ function updateActiveSidebarLink(page) {
     if (pageId === 'profile') renderProfile();
     if (pageId === 'trending') renderTrending();
 
-    // Destacar link ativo na sidebar
     updateActiveSidebarLink(pageId);
-
     window.location.hash = pageId === 'player' ? `player/${state.currentVideoId}` : pageId;
 }
 
@@ -1825,59 +2226,160 @@ function updateActiveSidebarLink(page) {
         }
 
         async function openVideo(id) {
-            state.currentVideoId = id;
-            const video = state.allVideos.find(v => v.id === id);
-            if (!video) return;
-            state.currentVideoData = video;
-            navigateTo('player');
-
-            const player = document.getElementById('html-player');
-            if (player) {
-                // Remover tracks antigas
-                player.querySelectorAll('track').forEach(t => t.remove());
-                player.src = video.url;
-                document.getElementById('player-title').innerText = video.title;
-                document.getElementById('player-desc').innerHTML = processDescription(video.description) || '<span class="text-gray-500">Sem descrição.</span>';
-                const uploaderNameEl = document.getElementById('player-uploader-name');
-uploaderNameEl.innerHTML = `<span class="cursor-pointer hover:text-yt-brand transition" onclick="navigateToChannel('${video.uploaderId}')">${video.uploaderName || 'Uploader'}</span>`;
-                document.getElementById('likes-count').innerText = video.likes || 0;
-                document.getElementById('dislikes-count').innerText = video.dislikes || 0;
-                const avatarEl = document.getElementById('player-uploader-avatar');
-                if (video.uploaderPhotoURL) {
-                    avatarEl.innerHTML =
-                        `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover" loading="lazy">`;
-                } else {
-                    avatarEl.innerHTML = video.uploaderName ? video.uploaderName[0].toUpperCase() : 'U';
-                }
-
-                await updateSubscriberDisplay(video.uploaderId);
-
-                try {
-                    await window.firestoreHelpers.updateDoc(window.firestoreHelpers.doc(window.db, 'videos', id), {
-                        views: window.firestoreHelpers.increment(1)
-                    });
-                } catch (e) {}
-
-                updatePlayerUI();
-                loadRecommended();
-                renderEditButtons();
-                updateFollowButton();
-                updateLikeButton();
-                updateDislikeButton();
-                renderPlaylistSection(video);
-                renderSubtitleSection();
-                setupCommentInput();
-                loadComments();      
-
-                player.play().catch(() => {});
-                state.isPlaying = true;
-                updatePlayButton();
-                showControls();
-                state.controlsVisible = true;
-                resetIdleTimer();
-                saveToViewHistory(id);
+    const video = state.allVideos.find(v => v.id === id);
+    if (!video) return;
+    
+    state.currentVideoId = id;
+    state.currentVideoData = video;
+    navigateTo('player');
+    
+    const ytId = extractYouTubeId ? extractYouTubeId(video.url) : null;
+    
+    // ═══════════════════════════════════════════
+    // SE FOR YOUTUBE → ESCONDE PLAYER PERSONALIZADO E MOSTRA EMBED DO YOUTUBE
+    // ═══════════════════════════════════════════
+    if (ytId) {
+        console.log('🎬 YouTube detectado! ID:', ytId);
+        
+        // Esconder player personalizado
+        const universalPlayer = document.getElementById('universal-player');
+        const subtitleSection = document.getElementById('subtitle-section');
+        
+        if (universalPlayer) universalPlayer.style.display = 'none';
+        if (subtitleSection) subtitleSection.classList.add('hidden');
+        
+        // Criar container do YouTube se não existir
+        let ytContainer = document.getElementById('yt-player-container');
+        if (!ytContainer) {
+            ytContainer = document.createElement('div');
+            ytContainer.id = 'yt-player-container';
+            ytContainer.style.cssText = 'position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.9);';
+            // Inserir antes do universal-player
+            const universalPlayerEl = document.getElementById('universal-player');
+            if (universalPlayerEl && universalPlayerEl.parentNode) {
+                universalPlayerEl.parentNode.insertBefore(ytContainer, universalPlayerEl);
             }
+        } else {
+            ytContainer.style.display = 'block';
         }
+        
+        // Criar iframe do YouTube
+        ytContainer.innerHTML = `
+            <iframe 
+                id="yt-embed-iframe"
+                src="https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1"
+                style="width:100%;height:100%;border:none;position:absolute;inset:0;"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowfullscreen>
+            </iframe>
+        `;
+        
+        // Atualizar informações do vídeo
+        atualizarUI(video, id);
+        
+        state.isPlaying = true;
+        
+        return;
+    }
+    
+    // ═══════════════════════════════════════════
+    // SE FOR MP4/OUTROS → MOSTRA PLAYER PERSONALIZADO
+    // ═══════════════════════════════════════════
+    
+    // Esconder container do YouTube
+    const ytContainer = document.getElementById('yt-player-container');
+    if (ytContainer) ytContainer.style.display = 'none';
+    
+    // Mostrar player personalizado
+    const universalPlayer = document.getElementById('universal-player');
+    if (universalPlayer) universalPlayer.style.display = '';
+    
+    // Limpar camada de mídia
+    const mediaLayer = document.getElementById('up-media-layer');
+    const htmlPlayer = document.getElementById('html-player');
+    
+    mediaLayer.querySelectorAll('iframe').forEach(f => f.remove());
+    
+    htmlPlayer.style.display = '';
+    htmlPlayer.querySelectorAll('track').forEach(t => t.remove());
+    
+    htmlPlayer.src = video.url;
+    htmlPlayer.load();
+    
+    document.getElementById('up-floating-title').textContent = video.title || '';
+    
+    atualizarUI(video, id);
+    
+    htmlPlayer.play().then(() => {
+        state.isPlaying = true;
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-pause"></i>';
+        document.getElementById('up-center-play').style.display = 'none';
+        document.getElementById('up-big-play-btn').classList.remove('show');
+    }).catch(() => {
+        state.isPlaying = false;
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('up-center-play').style.display = 'flex';
+        document.getElementById('up-big-play-btn').classList.add('show');
+    });
+}
+
+// ═══════════════════════════════════════════
+// FUNÇÃO AUXILIAR: atualizar UI do player
+// ═══════════════════════════════════════════
+function atualizarUI(video, id) {
+    // Título
+    document.getElementById('player-title').innerText = video.title;
+    
+    // Descrição
+    document.getElementById('player-desc').innerHTML = processDescription(video.description) || '<span class="text-gray-500">Sem descrição.</span>';
+    
+    // Uploader
+    const uploaderNameEl = document.getElementById('player-uploader-name');
+    if (uploaderNameEl) {
+        uploaderNameEl.innerHTML = `<span class="cursor-pointer hover:text-yt-brand transition" onclick="navigateToChannel('${video.uploaderId}')">${video.uploaderName || 'Uploader'}</span>`;
+    }
+    
+    // Likes/Dislikes
+    document.getElementById('likes-count').innerText = video.likes || 0;
+    document.getElementById('dislikes-count').innerText = video.dislikes || 0;
+    
+    // Avatar
+    const avatarEl = document.getElementById('player-uploader-avatar');
+    if (avatarEl) {
+        if (video.uploaderPhotoURL) {
+            avatarEl.innerHTML = `<img src="${video.uploaderPhotoURL}" class="w-full h-full object-cover" loading="lazy">`;
+        } else {
+            avatarEl.innerHTML = video.uploaderName ? video.uploaderName[0].toUpperCase() : 'U';
+        }
+    }
+    
+    // Atualizar subscribers
+    if (typeof updateSubscriberDisplay === 'function') {
+        updateSubscriberDisplay(video.uploaderId);
+    }
+    
+    // Incrementar views
+    try {
+        window.firestoreHelpers.updateDoc(
+            window.firestoreHelpers.doc(window.db, 'videos', id),
+            { views: window.firestoreHelpers.increment(1) }
+        );
+    } catch (e) {}
+    
+    // Atualizar UI
+    if (typeof updatePlayerUI === 'function') updatePlayerUI();
+    if (typeof loadRecommended === 'function') loadRecommended();
+    if (typeof renderEditButtons === 'function') renderEditButtons();
+    if (typeof updateFollowButton === 'function') updateFollowButton();
+    if (typeof updateLikeButton === 'function') updateLikeButton();
+    if (typeof updateDislikeButton === 'function') updateDislikeButton();
+    if (typeof renderPlaylistSection === 'function') renderPlaylistSection(video);
+    if (typeof setupCommentInput === 'function') setupCommentInput();
+    if (typeof loadComments === 'function') loadComments();
+    
+    // Salvar histórico
+    if (typeof saveToViewHistory === 'function') saveToViewHistory(id);
+}
         
         function clearSearch() {
     state.currentSearch = '';
@@ -2662,33 +3164,34 @@ function hideControls() {
         }
 
         function togglePlay() {
+    // Player nativo
     const player = document.getElementById('html-player');
-    if (!player) return;
+    if (!player || !player.src) return;
+    
     if (player.paused) {
-        player.play();
-        state.isPlaying = true;
+        player.play().then(() => {
+            state.isPlaying = true;
+            document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-pause"></i>';
+            document.getElementById('up-center-play').style.display = 'none';
+            document.getElementById('up-big-play-btn').classList.remove('show');
+        }).catch(() => {
+            state.isPlaying = false;
+            document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-play"></i>';
+            document.getElementById('up-center-play').style.display = 'flex';
+            document.getElementById('up-big-play-btn').classList.add('show');
+        });
     } else {
         player.pause();
         state.isPlaying = false;
-    }
-    updatePlayButton();
-    syncMiniPlayer();
-
-    // Resetar o timer de inatividade sempre que o play/pause for acionado
-    resetIdleTimer();
-
-    // Se pausar, cancela o timer e mantém controles visíveis
-    if (!state.isPlaying) {
-        clearTimeout(state.idleTimeout);
-        showControls();
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('up-center-play').style.display = 'flex';
+        document.getElementById('up-big-play-btn').classList.add('show');
     }
 }
 
-        function updatePlayButton() {
-            const btn = document.getElementById('play-btn');
-            if (!btn) return;
-            btn.innerHTML = state.isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
-        }
+function updatePlayButton() {
+    // Não faz nada - o player universal gerencia isso
+}
 
         function skipTime(s) {
             const player = document.getElementById('html-player');
@@ -3273,304 +3776,142 @@ previewCustomThumbnail = function(url) {
     originalPreviewCustomThumbnail(url);
 };
 
-// Adicionar listener no input de URL
-document.addEventListener('DOMContentLoaded', function() {
-    const urlInput = document.getElementById('up-url');
-    if (urlInput && !urlInput._ytListenerAdded) {
+// =============================================
+// YOUTUBE URL LISTENER + HANDLE UPLOAD CORRIGIDO
+// =============================================
+// =============================================
+// YOUTUBE URL LISTENER + HANDLE UPLOAD
+// =============================================
+(function() {
+    function setupYouTubeListener() {
+        const urlInput = document.getElementById('up-url');
+        if (!urlInput || urlInput._ytListenerAdded) return;
+        
         urlInput.addEventListener('input', async function(e) {
             const url = e.target.value.trim();
             const videoId = extractYouTubeId(url);
             
             if (videoId) {
                 showYouTubeDetected(videoId);
-                
-                // Buscar informações e preencher automaticamente
-                const info = await getYouTubeInfo(videoId);
-                const titleInput = document.getElementById('up-title');
-                const thumbInput = document.getElementById('up-thumbnail-url');
-                
-                if (titleInput && !titleInput.value && info.title) {
-                    titleInput.value = info.title;
-                }
-                if (thumbInput && !thumbInput.value && info.thumbnailUrl) {
-                    thumbInput.value = info.thumbnailUrl;
-                }
+                try {
+                    const info = await getYouTubeInfo(videoId);
+                    const titleInput = document.getElementById('up-title');
+                    const thumbInput = document.getElementById('up-thumbnail-url');
+                    if (titleInput && !titleInput.value && info.title) titleInput.value = info.title;
+                    if (thumbInput && !thumbInput.value && info.thumbnailUrl) {
+                        thumbInput.value = info.thumbnailUrl;
+                        previewCustomThumbnail(info.thumbnailUrl);
+                    }
+                } catch(err) {}
             } else {
                 urlInput.classList.remove('yt-detected');
             }
         });
         urlInput._ytListenerAdded = true;
     }
-});
+    
+    setupYouTubeListener();
+    setTimeout(setupYouTubeListener, 1000);
+})();
 
-// Modificar handleUploadWithAutoThumbnail para processar YouTube
-const originalHandleUpload = handleUploadWithAutoThumbnail;
+// Guardar referência da função original (será definida depois)
+let _originalHandleUpload = null;
+
+// Modificar handleUploadWithAutoThumbnail
 handleUploadWithAutoThumbnail = async function() {
+    // Garantir que a original existe
+    if (!_originalHandleUpload) {
+        // A função original será encontrada mais abaixo
+        _originalHandleUpload = async function() {
+            const agreeTerms = document.getElementById('agree-terms');
+            if (agreeTerms && !agreeTerms.checked) {
+                return showToast('Você deve concordar com as regras de upload.', 'error');
+            }
+            const url = document.getElementById('up-url').value.trim();
+            const title = document.getElementById('up-title').value.trim();
+            const desc = document.getElementById('up-desc').value.trim();
+            const thumbnailURLInput = document.getElementById('up-thumbnail-url').value.trim();
+            const playlist = document.getElementById('up-playlist').value.trim();
+            const selectedCats = Array.from(document.querySelectorAll('.category-checkbox:checked')).map(c => c.value);
+            
+            if (!url || !title) return showToast('Preencha URL e Título.', 'error');
+            if (selectedCats.length === 0) return showToast('Selecione ao menos uma categoria.', 'error');
+            
+            const btnPublicar = document.querySelector('#modal-upload button.bg-yt-brand');
+            if (btnPublicar) {
+                btnPublicar.disabled = true;
+                btnPublicar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Publicando...';
+            }
+            
+            try {
+                let thumbnailURL = thumbnailURLInput || null;
+                if (!thumbnailURL) {
+                    thumbnailURL = await generateThumbnail(url, title);
+                    if (thumbnailURL && thumbnailURL.startsWith('data:image')) thumbnailURL = null;
+                }
+                
+                const videoData = {
+                    url, title, description: desc || '', categories: selectedCats,
+                    uploaderId: state.currentUser.uid,
+                    uploaderName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
+                    uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
+                    views: 0, likes: 0, dislikes: 0, likedBy: [], dislikedBy: [],
+                    createdAt: window.firestoreHelpers.serverTimestamp()
+                };
+                if (thumbnailURL && (thumbnailURL.startsWith('http://') || thumbnailURL.startsWith('https://'))) {
+                    videoData.thumbnailURL = thumbnailURL;
+                }
+                if (playlist) videoData.playlist = playlist;
+                
+                await window.firestoreHelpers.addDoc(window.firestoreHelpers.collection(window.db, 'videos'), videoData);
+                showToast(thumbnailURL ? 'Vídeo publicado com capa!' : 'Vídeo publicado!');
+                toggleUploadModal(false);
+                await loadVideos();
+            } catch (e) {
+                showToast('Erro ao publicar: ' + e.message, 'error');
+            } finally {
+                if (btnPublicar) {
+                    btnPublicar.disabled = false;
+                    btnPublicar.innerHTML = '<i class="fas fa-upload"></i> Publicar';
+                }
+            }
+        };
+    }
+    
     const urlInput = document.getElementById('up-url');
-    if (!urlInput) return originalHandleUpload();
+    if (!urlInput) return _originalHandleUpload();
     
     const originalUrl = urlInput.value.trim();
     const videoId = extractYouTubeId(originalUrl);
     
     if (videoId) {
-        console.log('🎬 Processando upload do YouTube...');
-        
-        // Mostrar loading
         const btnPublicar = document.querySelector('#modal-upload button.bg-yt-brand');
+        if (!btnPublicar) return _originalHandleUpload();
+        
         const originalText = btnPublicar.innerHTML;
         btnPublicar.disabled = true;
         btnPublicar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Convertendo YouTube...';
         
         try {
-            // Tentar obter stream MP4
             const streamUrl = await getYouTubeStream(videoId);
-            
             if (streamUrl) {
-                // Substitui a URL do YouTube pela URL do stream
                 urlInput.value = streamUrl;
-                
-                // Busca informações se não preenchidas
-                const titleInput = document.getElementById('up-title');
-                const thumbInput = document.getElementById('up-thumbnail-url');
-                
-                if (!titleInput.value || !thumbInput.value) {
-                    const info = await getYouTubeInfo(videoId);
-                    if (!titleInput.value && info.title) titleInput.value = info.title;
-                    if (!thumbInput.value && info.thumbnailUrl) thumbInput.value = info.thumbnailUrl;
-                }
-                
-                showToast('✅ Vídeo do YouTube convertido com sucesso!');
+                showToast('✅ YouTube convertido!');
             } else {
-                // Não conseguiu converter, mas tenta usar embed
-                showToast('⚠️ Usando embed do YouTube (qualidade pode variar)', 'info');
+                showToast('⚠️ Stream não disponível, usando embed', 'info');
             }
-        } catch (e) {
-            console.error('Erro ao processar YouTube:', e);
-            showToast('⚠️ Erro na conversão. Tentando método alternativo...', 'info');
+        } catch(e) {
+            console.error(e);
         } finally {
             btnPublicar.disabled = false;
             btnPublicar.innerHTML = originalText;
         }
     }
     
-    // Continua com o upload normal
-    return originalHandleUpload();
+    return _originalHandleUpload();
 };
+   
 
-// =============================================
-// PLAYER HÍBRIDO (HTML5 + YouTube Fallback)
-// =============================================
-
-// Modificar a função openVideo para detectar e lidar com links do YouTube
-const originalOpenVideo = openVideo;
-openVideo = async function(id) {
-    const video = state.allVideos.find(v => v.id === id);
-    if (!video) return;
-    
-    // Verifica se a URL é do YouTube
-    const videoId = extractYouTubeId(video.url);
-    
-    if (videoId) {
-        console.log('🎬 Abrindo vídeo do YouTube:', videoId);
-        
-        // Tentar obter stream MP4 para player nativo
-        const streamUrl = await getYouTubeStream(videoId);
-        
-        if (streamUrl) {
-            // Substituir temporariamente a URL para o player nativo
-            const originalUrl = video.url;
-            video.url = streamUrl;
-            
-            // Abrir com player nativo
-            await originalOpenVideo(id);
-            
-            // Restaurar URL original (para referência)
-            video.url = originalUrl;
-        } else {
-            // Fallback: mostrar iframe do YouTube de forma elegante
-            showYouTubeFallbackPlayer(videoId, video);
-        }
-        
-        return;
-    }
-    
-    // Se não é YouTube, abre normalmente
-    return originalOpenVideo(id);
-};
-
-// Player fallback para quando não conseguir extrair o stream
-function showYouTubeFallbackPlayer(videoId, videoData) {
-    state.currentVideoId = videoData.id;
-    state.currentVideoData = videoData;
-    navigateTo('player');
-    
-    // Substituir o player nativo por um iframe do YouTube
-    const playerContainer = document.getElementById('player-container');
-    const htmlPlayer = document.getElementById('html-player');
-    const controls = document.getElementById('custom-controls');
-    
-    if (playerContainer && htmlPlayer) {
-        // Esconder player nativo e controles customizados
-        htmlPlayer.style.display = 'none';
-        if (controls) controls.style.display = 'none';
-        
-        // Criar iframe do YouTube responsivo
-        const existingIframe = playerContainer.querySelector('.yt-fallback-iframe');
-        if (existingIframe) existingIframe.remove();
-        
-        const iframe = document.createElement('iframe');
-        iframe.className = 'yt-fallback-iframe';
-        iframe.width = '100%';
-        iframe.height = '100%';
-        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-        iframe.frameBorder = '0';
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.position = 'absolute';
-        iframe.style.top = '0';
-        iframe.style.left = '0';
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        
-        playerContainer.appendChild(iframe);
-        
-        // Atualizar informações do vídeo
-        document.getElementById('player-title').innerText = videoData.title;
-        document.getElementById('player-desc').innerHTML = 
-            (videoData.description ? processDescription(videoData.description) : '') +
-            '<div class="mt-3 p-2 bg-red-500/10 border border-red-500/20 rounded-lg text-[10px] text-gray-400">' +
-            '<i class="fab fa-youtube mr-1"></i> Vídeo do YouTube reproduzido via embed' +
-            '</div>';
-        
-        // Esconder controles customizados
-        state.isPlaying = true;
-        updatePlayButton();
-        
-        showToast('🎬 Reproduzindo via YouTube (embed)', 'info');
-    }
-    
-    // Cleanup quando sair do player
-    const cleanupYouTube = () => {
-        const iframe = playerContainer?.querySelector('.yt-fallback-iframe');
-        if (iframe) iframe.remove();
-        if (htmlPlayer) htmlPlayer.style.display = '';
-        if (controls) controls.style.display = '';
-    };
-    
-    // Adicionar listener para limpar quando navegar para outra página
-    if (!window._ytCleanupListener) {
-        window.addEventListener('hashchange', cleanupYouTube);
-        window._ytCleanupListener = true;
-    }
-}
-
-// Adicionar estilo para o iframe do YouTube
-const ytStyle = document.createElement('style');
-ytStyle.textContent = `
-    .yt-fallback-iframe {
-        border: none;
-        border-radius: 12px;
-    }
-    @media (max-width: 640px) {
-        .yt-fallback-iframe {
-            border-radius: 0;
-        }
-    }
-`;
-document.head.appendChild(ytStyle);
-
-
-async function handleUploadWithAutoThumbnail() {
-    const agreeTerms = document.getElementById('agree-terms');
-    if (agreeTerms && !agreeTerms.checked) {
-        return showToast('Você deve concordar com as regras de upload.', 'error');
-    }
-
-    const url = document.getElementById('up-url').value.trim();
-    const title = document.getElementById('up-title').value.trim();
-    const desc = document.getElementById('up-desc').value.trim();
-    const thumbnailURLInput = document.getElementById('up-thumbnail-url').value.trim();
-    const playlist = document.getElementById('up-playlist').value.trim();
-    const selectedCats = Array.from(
-        document.querySelectorAll('.category-checkbox:checked')
-    ).map(c => c.value);
-
-    if (!url || !title) {
-        return showToast('Preencha URL e Título.', 'error');
-    }
-    if (selectedCats.length === 0) {
-        return showToast('Selecione ao menos uma categoria.', 'error');
-    }
-
-    const btnPublicar = document.querySelector('#modal-upload button.bg-yt-brand');
-    if (btnPublicar) {
-        btnPublicar.disabled = true;
-        btnPublicar.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Publicando...';
-    }
-
-    try {
-        let thumbnailURL = thumbnailURLInput || null;
-        
-        // Se não foi fornecida thumbnail, tenta gerar automaticamente
-        if (!thumbnailURL) {
-            console.log('🎨 Iniciando geração automática de capa...');
-            thumbnailURL = await generateThumbnail(url, title);
-            
-            if (thumbnailURL && thumbnailURL.startsWith('data:image')) {
-                // Se for data URL (frame capturado), não salvamos no Firestore
-                // porque é muito grande. Usamos apenas para preview.
-                console.log('⚠️ Data URL muito grande, buscando alternativa...');
-                thumbnailURL = null; // Não salva data URL
-            }
-        }
-        
-        const videoData = {
-            url,
-            title,
-            description: desc || '',
-            categories: selectedCats,
-            uploaderId: state.currentUser.uid,
-            uploaderName: state.userProfile?.displayName || state.currentUser.displayName || 'Usuário',
-            uploaderPhotoURL: state.userProfile?.photoURL || state.currentUser.photoURL || '',
-            views: 0,
-            likes: 0,
-            dislikes: 0,
-            likedBy: [],
-            dislikedBy: [],
-            createdAt: window.firestoreHelpers.serverTimestamp()
-        };
-        
-        // Só adiciona thumbnailURL se for uma URL HTTP válida
-        if (thumbnailURL && (thumbnailURL.startsWith('http://') || thumbnailURL.startsWith('https://'))) {
-            videoData.thumbnailURL = thumbnailURL;
-            console.log('✅ Thumbnail adicionada:', thumbnailURL);
-        } else {
-            console.log('⚠️ Nenhuma thumbnail válida, usando placeholder');
-        }
-        
-        if (playlist) {
-            videoData.playlist = playlist;
-        }
-        
-        await window.firestoreHelpers.addDoc(
-            window.firestoreHelpers.collection(window.db, 'videos'), 
-            videoData
-        );
-        
-        showToast(thumbnailURL ? 'Vídeo publicado com capa!' : 'Vídeo publicado! (sem capa automática)');
-        toggleUploadModal(false);
-        await loadVideos();
-        
-    } catch (e) {
-        console.error('❌ Erro ao publicar:', e);
-        showToast('Erro ao publicar: ' + e.message, 'error');
-    } finally {
-        if (btnPublicar) {
-            btnPublicar.disabled = false;
-            btnPublicar.innerHTML = '<i class="fas fa-upload"></i> Publicar';
-        }
-    }
-}
 
 // =============================================
 // GERADOR AUTOMÁTICO DE THUMBNAILS (CORRIGIDO)
@@ -4576,6 +4917,390 @@ function formatTimeAgo(date) {
     
     return date.toLocaleDateString('pt-BR');
 }
+
+// ═══════════════════════════════════════════
+// PLAYER UNIVERSAL - JAVASCRIPT COMPLETO
+// ═══════════════════════════════════════════
+
+const UP = {
+    player: null,
+    video: null,
+    container: null,
+    isPlaying: false,
+    isFullscreen: false,
+    isMuted: false,
+    volume: 1,
+    speed: 1,
+    hideTimeout: null,
+    subtitleActive: false,
+    
+    init() {
+        this.container = document.getElementById('universal-player');
+        this.video = document.getElementById('html-player');
+        if (!this.container || !this.video) return;
+        
+        this.bindEvents();
+        this.updateVolumeIcon();
+        console.log('✅ Player Universal inicializado');
+    },
+    
+    bindEvents() {
+        // Play/Pause
+        document.getElementById('up-btn-play').addEventListener('click', () => this.togglePlay());
+        document.getElementById('up-big-play-btn').addEventListener('click', () => this.togglePlay());
+        this.video.addEventListener('click', () => this.togglePlay());
+        
+        // Progresso
+        const track = document.getElementById('up-progress-track');
+        track.addEventListener('click', (e) => this.seek(e));
+        track.addEventListener('mousemove', (e) => this.updateTooltip(e));
+        
+        // Volume
+        document.getElementById('up-btn-volume').addEventListener('click', () => this.toggleMute());
+        document.getElementById('up-volume-slider').addEventListener('input', (e) => this.setVolume(e.target.value / 100));
+        
+        // Navegação
+        document.getElementById('up-btn-prev').addEventListener('click', () => this.skip(-10));
+        document.getElementById('up-btn-next').addEventListener('click', () => this.skip(10));
+        
+        // Velocidade
+        document.getElementById('up-btn-speed').addEventListener('click', () => this.toggleSpeedMenu());
+        document.querySelectorAll('.up-speed-opt').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.setSpeed(parseFloat(btn.dataset.speed));
+                this.toggleSpeedMenu(false);
+            });
+        });
+        
+        // Legendas
+        document.getElementById('up-btn-cc').addEventListener('click', () => this.toggleSubtitles());
+        
+        // Mini player
+        document.getElementById('up-btn-mini').addEventListener('click', () => {
+            if (typeof toggleMiniPlayer === 'function') toggleMiniPlayer();
+            else showToast('Mini player ativado', 'info');
+        });
+        
+        // Teatro
+        document.getElementById('up-btn-theater').addEventListener('click', () => this.toggleTheater());
+        
+        // PiP
+        document.getElementById('up-btn-pip').addEventListener('click', () => this.togglePiP());
+        
+        // Fullscreen
+        document.getElementById('up-btn-fullscreen').addEventListener('click', () => this.toggleFullscreen());
+        
+        // Eventos do vídeo
+        this.video.addEventListener('timeupdate', () => this.updateProgress());
+        this.video.addEventListener('play', () => this.onPlay());
+        this.video.addEventListener('pause', () => this.onPause());
+        this.video.addEventListener('ended', () => this.onEnded());
+        this.video.addEventListener('loadedmetadata', () => this.updateDuration());
+        this.video.addEventListener('progress', () => this.updateBuffer());
+        this.video.addEventListener('waiting', () => this.showLoading());
+        this.video.addEventListener('canplay', () => this.hideLoading());
+        
+        // Teclado
+        document.addEventListener('keydown', (e) => this.handleKeyboard(e));
+        
+        // Fullscreen change
+        document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
+        document.addEventListener('webkitfullscreenchange', () => this.onFullscreenChange());
+        
+        // Mouse move para mostrar/ocultar controles
+        this.container.addEventListener('mousemove', () => this.showControls());
+        this.container.addEventListener('mouseleave', () => {
+            if (this.isPlaying) this.hideControlsDelayed();
+        });
+        this.container.addEventListener('touchstart', () => this.showControls());
+    },
+    
+    togglePlay() {
+        if (this.video.paused) {
+            this.video.play().catch(() => {});
+        } else {
+            this.video.pause();
+        }
+    },
+    
+    onPlay() {
+        this.isPlaying = true;
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-pause"></i>';
+        document.getElementById('up-big-play-btn').classList.remove('show');
+        document.getElementById('up-center-play').style.display = 'none';
+        this.hideControlsDelayed();
+    },
+    
+    onPause() {
+        this.isPlaying = false;
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('up-big-play-btn').classList.add('show');
+        document.getElementById('up-center-play').style.display = 'flex';
+        this.showControls();
+    },
+    
+    onEnded() {
+        this.isPlaying = false;
+        document.getElementById('up-btn-play').innerHTML = '<i class="fas fa-play"></i>';
+        document.getElementById('up-big-play-btn').classList.add('show');
+        document.getElementById('up-center-play').style.display = 'flex';
+        this.showControls();
+    },
+    
+    seek(e) {
+        const rect = document.getElementById('up-progress-track').getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        this.video.currentTime = pos * this.video.duration;
+    },
+    
+    updateProgress() {
+        if (!this.video.duration) return;
+        const perc = (this.video.currentTime / this.video.duration) * 100;
+        document.getElementById('up-progress-fill').style.width = perc + '%';
+        document.getElementById('up-progress-thumb').style.left = perc + '%';
+        document.getElementById('up-time').textContent = 
+            this.formatTime(this.video.currentTime) + ' / ' + this.formatTime(this.video.duration);
+    },
+    
+    updateBuffer() {
+        if (this.video.buffered.length > 0) {
+            const buffered = this.video.buffered.end(this.video.buffered.length - 1);
+            const perc = (buffered / this.video.duration) * 100;
+            document.getElementById('up-progress-buffer').style.width = perc + '%';
+        }
+    },
+    
+    updateDuration() {
+        document.getElementById('up-time').textContent = 
+            '0:00 / ' + this.formatTime(this.video.duration);
+    },
+    
+    updateTooltip(e) {
+        const rect = document.getElementById('up-progress-track').getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        const time = pos * this.video.duration;
+        const tooltip = document.getElementById('up-progress-tooltip');
+        tooltip.textContent = this.formatTime(time);
+        tooltip.style.left = (pos * 100) + '%';
+    },
+    
+    skip(seconds) {
+        this.video.currentTime = Math.max(0, Math.min(this.video.duration, this.video.currentTime + seconds));
+    },
+    
+    setVolume(vol) {
+        this.volume = vol;
+        this.video.volume = vol;
+        this.isMuted = vol === 0;
+        document.getElementById('up-volume-slider').value = vol * 100;
+        this.updateVolumeIcon();
+    },
+    
+    toggleMute() {
+        if (this.isMuted) {
+            this.setVolume(this.volume || 1);
+        } else {
+            this.setVolume(0);
+        }
+    },
+    
+    updateVolumeIcon() {
+        const btn = document.getElementById('up-btn-volume');
+        if (this.video.volume === 0 || this.isMuted) {
+            btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+        } else if (this.video.volume < 0.5) {
+            btn.innerHTML = '<i class="fas fa-volume-down"></i>';
+        } else {
+            btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+        }
+    },
+    
+    setSpeed(speed) {
+        this.speed = speed;
+        this.video.playbackRate = speed;
+        document.getElementById('up-btn-speed').querySelector('.up-speed-label').textContent = speed + 'x';
+        document.querySelectorAll('.up-speed-opt').forEach(b => {
+            b.classList.toggle('active', parseFloat(b.dataset.speed) === speed);
+        });
+    },
+    
+    toggleSpeedMenu(show) {
+        const menu = document.getElementById('up-speed-menu');
+        if (show === undefined) {
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        } else {
+            menu.style.display = show ? 'flex' : 'none';
+        }
+    },
+    
+    toggleSubtitles() {
+        const section = document.getElementById('subtitle-section');
+        if (section) {
+            section.classList.toggle('hidden');
+            if (!section.classList.contains('hidden')) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        document.getElementById('up-btn-cc').classList.toggle('active', this.subtitleActive);
+    },
+    
+    toggleTheater() {
+        if (this.container.style.maxWidth === '100%') {
+            this.container.style.maxWidth = '';
+            this.container.style.borderRadius = '16px';
+        } else {
+            this.container.style.maxWidth = '100%';
+            this.container.style.borderRadius = '0';
+        }
+    },
+    
+    togglePiP() {
+        if (document.pictureInPictureElement) {
+            document.exitPictureInPicture();
+        } else if (document.pictureInPictureEnabled) {
+            this.video.requestPictureInPicture();
+        }
+    },
+    
+    toggleFullscreen() {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else {
+            this.container.requestFullscreen().catch(() => {});
+        }
+    },
+    
+    onFullscreenChange() {
+        this.isFullscreen = !!document.fullscreenElement;
+        const icon = document.getElementById('up-btn-fullscreen').querySelector('i');
+        icon.className = this.isFullscreen ? 'fas fa-compress' : 'fas fa-expand';
+    },
+    
+    showControls() {
+        const bar = document.getElementById('up-controls-bar');
+        bar.classList.remove('hidden');
+        document.getElementById('up-floating-title').classList.add('show');
+        clearTimeout(this.hideTimeout);
+    },
+    
+    hideControlsDelayed() {
+        clearTimeout(this.hideTimeout);
+        this.hideTimeout = setTimeout(() => {
+            if (this.isPlaying) {
+                document.getElementById('up-controls-bar').classList.add('hidden');
+                document.getElementById('up-floating-title').classList.remove('show');
+            }
+        }, 4000);
+    },
+    
+    showLoading() {
+        document.getElementById('up-loading').style.display = 'flex';
+    },
+    
+    hideLoading() {
+        document.getElementById('up-loading').style.display = 'none';
+    },
+    
+    handleKeyboard(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        if (!document.getElementById('page-player')?.classList.contains('active')) return;
+        
+        switch(e.code) {
+            case 'Space': e.preventDefault(); this.togglePlay(); break;
+            case 'ArrowLeft': this.skip(-10); break;
+            case 'ArrowRight': this.skip(10); break;
+            case 'ArrowUp': e.preventDefault(); this.setVolume(Math.min(1, this.video.volume + 0.1)); break;
+            case 'ArrowDown': e.preventDefault(); this.setVolume(Math.max(0, this.video.volume - 0.1)); break;
+            case 'KeyM': this.toggleMute(); break;
+            case 'KeyF': this.toggleFullscreen(); break;
+            case 'KeyT': this.toggleTheater(); break;
+            case 'KeyC': this.toggleSubtitles(); break;
+            case 'KeyI': document.getElementById('up-btn-mini').click(); break;
+            case 'KeyP': this.togglePiP(); break;
+            case 'Digit0': case 'Numpad0': this.seek({ clientX: 0 }); break;
+            case 'Digit1': case 'Numpad1': this.video.currentTime = this.video.duration * 0.1; break;
+            case 'Digit2': case 'Numpad2': this.video.currentTime = this.video.duration * 0.2; break;
+            case 'Digit3': case 'Numpad3': this.video.currentTime = this.video.duration * 0.3; break;
+            case 'Digit4': case 'Numpad4': this.video.currentTime = this.video.duration * 0.4; break;
+            case 'Digit5': case 'Numpad5': this.video.currentTime = this.video.duration * 0.5; break;
+            case 'Digit6': case 'Numpad6': this.video.currentTime = this.video.duration * 0.6; break;
+            case 'Digit7': case 'Numpad7': this.video.currentTime = this.video.duration * 0.7; break;
+            case 'Digit8': case 'Numpad8': this.video.currentTime = this.video.duration * 0.8; break;
+            case 'Digit9': case 'Numpad9': this.video.currentTime = this.video.duration * 0.9; break;
+        }
+    },
+    
+    formatTime(seconds) {
+        if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        return m + ':' + String(s).padStart(2, '0');
+    },
+    
+    setSource(url, title) {
+        if (this.video) {
+            this.video.src = url;
+            this.video.load();
+            document.getElementById('up-floating-title').textContent = title || '';
+        }
+    },
+    
+    showSourceBadge(source, icon) {
+        const badge = document.getElementById('up-source-badge');
+        badge.style.display = 'flex';
+        badge.innerHTML = `<i class="${icon}"></i> ${source}`;
+        if (source === 'YouTube') badge.style.background = 'rgba(255,0,0,0.7)';
+        else badge.style.background = 'rgba(0,0,0,0.8)';
+        setTimeout(() => { badge.style.display = 'none'; }, 3000);
+    }
+};
+
+// Funções de legenda
+function universalLoadSubtitle() {
+    const url = document.getElementById('subtitle-url').value.trim();
+    if (!url) return showToast('Insira a URL da legenda (.vtt)', 'error');
+    
+    const player = document.getElementById('html-player');
+    player.querySelectorAll('track').forEach(t => t.remove());
+    
+    const track = document.createElement('track');
+    track.kind = 'subtitles';
+    track.label = 'Legenda';
+    track.srclang = 'pt';
+    track.src = url;
+    track.default = true;
+    player.appendChild(track);
+    
+    for (let i = 0; i < player.textTracks.length; i++) {
+        player.textTracks[i].mode = 'showing';
+    }
+    
+    UP.subtitleActive = true;
+    document.getElementById('up-btn-cc').classList.add('active');
+    document.getElementById('subtitle-section').classList.add('hidden');
+    document.getElementById('subtitle-url').value = '';
+    showToast('Legenda carregada!');
+}
+
+function universalRemoveSubtitles() {
+    const player = document.getElementById('html-player');
+    player.querySelectorAll('track').forEach(t => t.remove());
+    for (let i = 0; i < player.textTracks.length; i++) {
+        player.textTracks[i].mode = 'disabled';
+    }
+    UP.subtitleActive = false;
+    document.getElementById('up-btn-cc').classList.remove('active');
+    document.getElementById('subtitle-section').classList.add('hidden');
+    showToast('Legendas removidas');
+}
+
+// Inicializar quando a página carregar
+window.addEventListener('load', () => {
+    UP.init();
+});
+
 
         // Inicialização
         window.onload = init;
